@@ -76,6 +76,7 @@ class Directory():
 
 		self.client = client
 		self.id = None
+		self.file_list_metadata = {}
 
 
 	def new(self, name: str):
@@ -129,9 +130,11 @@ class Directory():
 
 
 	def list_files(
-			self, 
+			self,
+			page_num=1,
 			limit=None,
-			search_term: str =None):
+			search_term: str =None,
+			file_view_mode: str = 'annotation'):
 		"""
 		Get a list of files in directory (from Diffgram service). 
 	
@@ -165,9 +168,10 @@ class Directory():
 				'annotation_status': "All",
 				'limit': limit,
 				'media_type': "All",
+				'page': page_num,
 				'request_next_page': False,
 				'request_previous_page': False,
-				'file_view_mode': "annotation",
+				'file_view_mode': file_view_mode,
 				'search_term': search_term
 			}
 		}
@@ -188,7 +192,7 @@ class Directory():
 		# Success
 		data = response.json()
 		file_list_json = data.get('file_list')
-
+		self.file_list_metadata = data.get('metadata')
 		# TODO would like this to perhaps be a seperate function
 		# ie part of File_Constructor perhaps
 		file_list = []
