@@ -132,7 +132,7 @@ class Directory():
 	def list_files(
 			self,
 			page_num=1,
-			limit=None,
+			limit=100,
 			search_term: str =None,
 			file_view_mode: str = 'annotation'):
 		"""
@@ -169,8 +169,6 @@ class Directory():
 				'limit': limit,
 				'media_type': "All",
 				'page': page_num,
-				'request_next_page': False,
-				'request_previous_page': False,
 				'file_view_mode': file_view_mode,
 				'search_term': search_term
 			}
