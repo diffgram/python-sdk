@@ -1,7 +1,7 @@
 from diffgram.file.file import File
 from ..regular.regular import refresh_from_dict
 import logging
-
+from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
 
 def get_directory_list(self):
 	"""
@@ -78,6 +78,34 @@ class Directory():
 		self.id = None
 		self.file_list_metadata = {}
 
+	def all_files(self):
+		"""
+			Get all the files of the directoy.
+			Warning! This can be an expensive function and take a long time.
+		:return:
+		"""
+		page_num = 1
+		result = []
+		while page_num is not None:
+			diffgram_files = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'base')
+			page_num = self.file_list_metadata['next_page']
+			result = result + diffgram_files
+		return result
+
+	def to_pytorch(self, transform = None):
+		"""
+			Transforms the file list inside the dataset into a pytorch dataset.
+		:return:
+		"""
+		dataset_files = self.all_files()
+		file_id_list = [file.id for file in dataset_files]
+		pytorch_dataset = DiffgramPytorchDataset(
+			project = self.client,
+			diffgram_file_id_list = file_id_list,
+			transform = transform
+
+		)
+		return pytorch_dataset
 
 	def new(self, name: str):
 		"""

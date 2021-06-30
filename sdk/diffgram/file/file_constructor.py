@@ -414,29 +414,42 @@ class FileConstructor():
 
 
 	def get_by_id(self, 
-				  id: int):
+				  id: int,
+				  with_instances: bool = False):
 		"""
 		returns Diffgram File object
 		"""
-	
-		endpoint = "/api/v1/file/view"
 
-		spec_dict = {
-			'file_id': id,
-			'project_string_id': self.client.project_string_id
+		if not with_instances:
+			endpoint = "/api/v1/file/view"
+
+			spec_dict = {
+				'file_id': id,
+				'project_string_id': self.client.project_string_id,
+				}
+
+
+			file_response_key = 'file'
+
+		else:
+			endpoint = "/api/project/{}/file/{}/annotation/list".format(self.client.project_string_id, id)
+			spec_dict = {
+				'directory_id': self.client.directory_id
 			}
+			file_response_key = 'file_serialized'
 
 		response = self.client.session.post(
 			self.client.host + endpoint,
 			json = spec_dict)
-		
+
 		self.client.handle_errors(response)
 
 		response_json = response.json()
+		file_data = response_json.get(file_response_key)
 
 		return File.new(
 			client = self.client,
-			file_json = response_json.get('file'))
+			file_json = file_data)
 
 
 

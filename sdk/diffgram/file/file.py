@@ -1,6 +1,5 @@
 from ..regular.regular import refresh_from_dict
 
-
 class File():
     """
     file literal object
@@ -11,11 +10,12 @@ class File():
 
     def __init__(
             self,
-            id=None,
-            client=None):
+            id = None,
+            client = None):
         self.id = id
         self.client = client
 
+    @staticmethod
     def new(
             client,
             file_json):
