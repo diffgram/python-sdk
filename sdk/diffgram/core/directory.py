@@ -58,7 +58,9 @@ def set_directory_by_name(self, name):
 
 		nickname = directory.get("nickname")
 		if nickname == name:
-			self.set_default_directory(directory.get("id"))
+			directory_id = directory.get("directory_id")
+			if directory_id is None: directory.get("id")
+			self.set_default_directory(directory_id)
 			did_set = True
 			break
 		else:
