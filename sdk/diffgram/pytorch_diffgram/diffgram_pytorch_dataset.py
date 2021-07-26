@@ -29,6 +29,7 @@ class DiffgramPytorchDataset(Dataset):
         if instance['type'] == 'box':
             result = np.array([instance['x_min'], instance['y_min'], instance['x_max'], instance['y_max']])
             result = torch.tensor(result)
+
         return result
 
     def __len__(self):
