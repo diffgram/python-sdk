@@ -7,7 +7,7 @@ import numpy as np
 
 class DiffgramPytorchDataset(Dataset):
 
-    def __init__(self, project, diffgram_file_id_list, transform = None):
+    def __init__(self, project, diffgram_file_id_list = None, transform = None):
         """
 
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
@@ -15,10 +15,17 @@ class DiffgramPytorchDataset(Dataset):
         :param transform (callable, optional): Optional transforms to be applied on a sample
         """
         self.diffgram_file_id_list = diffgram_file_id_list
+        self.__validate_file_ids()
         self.project = project
         self.transform = transform
+        self._internal_file_list = []
 
-    def __process_instance(self, instance):
+
+    def __validate_file_ids(self):
+        url = '/api/'
+        raise NotImplementedError
+
+    def __extract_bbox_values(self, instance_list):
         """
             Creates a pytorch tensor based on the instance type.
             For now we are assuming shapes here, but we can extend it
@@ -26,14 +33,26 @@ class DiffgramPytorchDataset(Dataset):
         :param instance:
         :return:
         """
-        if instance['type'] == 'box':
-            result = np.array([instance['x_min'], instance['y_min'], instance['x_max'], instance['y_max']])
-            result = torch.tensor(result)
+        x_min_list = []
+        x_max_list = []
+        y_min_list = []
+        y_max_list = []
 
-        return result
+        for inst in instance_list:
+            if inst['type'] != 'box':
+                continue
+            x_min_list.append(inst['x_min'])
+            x_max_list.append(inst['x_max'])
+            y_min_list.append(inst['y_min'])
+            y_max_list.append(inst['y_max'])
+
+        return x_min_list, x_max_list, y_min_list, y_max_list
 
     def __len__(self):
         return len(self.diffgram_file_id_list)
+
+    def __get_next_page_of_data(self):
+        raise NotImplementedError
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -46,13 +65,18 @@ class DiffgramPytorchDataset(Dataset):
             raise Exception('Pytorch datasets only support images. Please provide only file_ids from images')
 
         instance_list = diffgram_file.instance_list
-
+        instance_types_in_file = set([x['type'] for x in instance_list])
         # Process the instances of each file
         processed_instance_list = []
-        for instance in instance_list:
-            instnace_tensor = self.__process_instance(instance)
-            processed_instance_list.append(instnace_tensor)
-        sample = {'image': image, 'instance_list': instance_list}
+
+        sample = {'image': image}
+        if 'box' in instance_types_in_file:
+            x_min_list, x_max_list, y_min_list, y_max_list = self.__extract_bbox_values(instance_list)
+            sample['x_min_list'] = torch.Tensor(x_min_list)
+            sample['x_max_list'] = torch.Tensor(x_max_list)
+            sample['y_min_list'] = torch.Tensor(y_min_list)
+            sample['y_max_list'] = torch.Tensor(y_max_list)
+        if 'polygon' in instance_types_in_file:
 
         if self.transform:
             sample = self.transform(sample)
