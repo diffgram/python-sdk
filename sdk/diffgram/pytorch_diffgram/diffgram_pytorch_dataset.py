@@ -3,6 +3,8 @@ import torch
 import os
 from imageio import imread
 import numpy as np
+import scipy as sp
+from PIL import Image, ImageDraw
 
 
 class DiffgramPytorchDataset(Dataset):
@@ -15,17 +17,37 @@ class DiffgramPytorchDataset(Dataset):
         :param transform (callable, optional): Optional transforms to be applied on a sample
         """
         self.diffgram_file_id_list = diffgram_file_id_list
-        self.__validate_file_ids()
+
         self.project = project
         self.transform = transform
         self._internal_file_list = []
-
+        self.__validate_file_ids()
 
     def __validate_file_ids(self):
-        url = '/api/'
-        raise NotImplementedError
+        result = self.project.file.file_list_exists(self.diffgram_file_id_list)
+        if not result:
+            raise Exception(
+                'Some file IDs do not belong to the project. Please provide only files from the same project.')
 
-    def __extract_bbox_values(self, instance_list):
+    def __extract_masks_from_polygon(self, instance_list, diffgram_file, empty_value = 0):
+        nx, ny = diffgram_file.image['width'], diffgram_file.image['height']
+        mask_list = []
+        for instance in instance_list:
+            if instance['type'] != 'polygon':
+                continue
+            poly = [(p['x'], p['y']) for p in instance['points']]
+
+            img = Image.new(mode = 'L', size = (nx, ny), color = 0)  # mode L = 8-bit pixels, black and white
+            draw = ImageDraw.Draw(img)
+            print()
+            draw.polygon(poly, outline = 1, fill = 1)
+            mask = np.array(img).astype('float32')
+            # mask[np.where(mask == 0)] = empty_value
+            print('mask', len(mask))
+            mask_list.append(mask)
+        return mask_list
+
+    def __extract_bbox_values(self, instance_list, diffgram_file):
         """
             Creates a pytorch tensor based on the instance type.
             For now we are assuming shapes here, but we can extend it
@@ -41,10 +63,10 @@ class DiffgramPytorchDataset(Dataset):
         for inst in instance_list:
             if inst['type'] != 'box':
                 continue
-            x_min_list.append(inst['x_min'])
-            x_max_list.append(inst['x_max'])
-            y_min_list.append(inst['y_min'])
-            y_max_list.append(inst['y_max'])
+            x_min_list.append(inst['x_min'] / diffgram_file.image['width'])
+            x_max_list.append(inst['x_max'] / diffgram_file.image['width'])
+            y_min_list.append(inst['y_min'] / diffgram_file.image['width'])
+            y_max_list.append(inst['y_max'] / diffgram_file.image['width'])
 
         return x_min_list, x_max_list, y_min_list, y_max_list
 
@@ -58,7 +80,7 @@ class DiffgramPytorchDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        diffgram_file = self.project.file.get_by_id(idx, with_instances = True)
+        diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True)
         if hasattr(diffgram_file, 'image'):
             image = imread(diffgram_file.image.get('url_signed'))
         else:
@@ -68,16 +90,16 @@ class DiffgramPytorchDataset(Dataset):
         instance_types_in_file = set([x['type'] for x in instance_list])
         # Process the instances of each file
         processed_instance_list = []
-
-        sample = {'image': image}
+        sample = {'image': image, 'diffgram_file': diffgram_file}
         if 'box' in instance_types_in_file:
-            x_min_list, x_max_list, y_min_list, y_max_list = self.__extract_bbox_values(instance_list)
+            x_min_list, x_max_list, y_min_list, y_max_list = self.__extract_bbox_values(instance_list, diffgram_file)
             sample['x_min_list'] = torch.Tensor(x_min_list)
             sample['x_max_list'] = torch.Tensor(x_max_list)
             sample['y_min_list'] = torch.Tensor(y_min_list)
             sample['y_max_list'] = torch.Tensor(y_max_list)
         if 'polygon' in instance_types_in_file:
-
+            mask_list = self.__extract_masks_from_polygon(instance_list, diffgram_file)
+            sample['polygon_mask_list'] = mask_list
         if self.transform:
             sample = self.transform(sample)
 

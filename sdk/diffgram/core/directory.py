@@ -92,13 +92,35 @@ class Directory():
 			result = result + diffgram_files
 		return result
 
+	def all_file_ids(self):
+		page_num = 1
+		result = []
+		while page_num is not None:
+			diffgram_files = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'ids_only')
+			page_num = self.file_list_metadata['next_page']
+			result = result + diffgram_files
+		return result
+
+	def slice(self, query):
+		from diffgram.core.sliced_directory import SlicedDirectory
+		result = self.list_files(
+			limit = 25,
+			page_num = 1,
+			file_view_mode = 'ids_only'
+		)
+		sliced_dataset = SlicedDirectory(
+			query = query,
+			original_directory = self
+		)
+		return sliced_dataset
+
 	def to_pytorch(self, transform = None):
 		"""
 			Transforms the file list inside the dataset into a pytorch dataset.
 		:return:
 		"""
-		dataset_files = self.all_files()
-		file_id_list = [file.id for file in dataset_files]
+		from diffgram.core.sliced_directory import SlicedDirectory
+		file_id_list = self.all_file_ids()
 		pytorch_dataset = DiffgramPytorchDataset(
 			project = self.client,
 			diffgram_file_id_list = file_id_list,
@@ -162,7 +184,8 @@ class Directory():
 			page_num=1,
 			limit=100,
 			search_term: str =None,
-			file_view_mode: str = 'annotation'):
+			file_view_mode: str = 'annotation',
+			query: str = None):
 		"""
 		Get a list of files in directory (from Diffgram service). 
 	

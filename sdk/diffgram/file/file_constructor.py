@@ -383,7 +383,7 @@ class FileConstructor():
 
         return instance_list
 
-    def import_bulk:
+    def import_bulk(self):
         """
         Import multiple packets
         FUTURE
@@ -392,7 +392,7 @@ class FileConstructor():
             { packet_id : { packet }}
 
         """
-        pass
+        raise NotImplementedError
 
     def get_file_list(self, id_list: list, with_instances: bool = False):
         """
