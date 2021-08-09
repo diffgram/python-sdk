@@ -23,11 +23,17 @@ from PIL import Image, ImageDraw
 img = Image.new("L", [diffgram_dataset[0]['diffgram_file'].image['width'], diffgram_dataset[0]['diffgram_file'].image['height']], 0)
 mask1 = diffgram_dataset[0]['polygon_mask_list'][0]
 mask2 = diffgram_dataset[0]['polygon_mask_list'][1]
-print(mask1)
-for x in mask1:
-    print(x)
 plt.figure()
 plt.subplot(1,2,1)
 # plt.imshow(img, 'gray', interpolation='none')
 plt.imshow(mask1, 'jet', interpolation='none', alpha=0.7)
 plt.imshow(mask2, 'Oranges', interpolation='none', alpha=0.7)
+plt.show()
+
+
+# Dataset Example
+
+dataset = project.directory.get('Default')
+
+sliced_dataset = dataset.slice(query = 'labels.sheep  > 0 or labels.sofa > 0')
+

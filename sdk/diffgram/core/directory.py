@@ -109,6 +109,7 @@ class Directory():
 			file_view_mode = 'ids_only'
 		)
 		sliced_dataset = SlicedDirectory(
+			client = self.client,
 			query = query,
 			original_directory = self
 		)
