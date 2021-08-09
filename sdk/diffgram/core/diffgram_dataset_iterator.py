@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw
 from imageio import imread
-
+import numpy as np
 
 class DiffgramDatasetIterator:
 
@@ -42,7 +42,7 @@ class DiffgramDatasetIterator:
             raise Exception('Pytorch datasets only support images. Please provide only file_ids from images')
 
     def get_file_instances(self, diffgram_file):
-        if diffgram_file['type'] not in ['image', 'frame']:
+        if diffgram_file.type not in ['image', 'frame']:
             raise NotImplementedError('File type "{}" is not supported yet'.format(diffgram_file['type']))
 
         image = self.get_image_data(diffgram_file)

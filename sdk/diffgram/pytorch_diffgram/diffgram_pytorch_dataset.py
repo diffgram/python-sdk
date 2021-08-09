@@ -1,8 +1,5 @@
-import os
-
-import numpy as np
-import scipy as sp
-
+from torch.utils.data import Dataset, DataLoader
+import torch as torch  # type: ignore
 from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 
 
@@ -15,20 +12,12 @@ class DiffgramPytorchDataset(DiffgramDatasetIterator, Dataset):
         :param diffgram_file_list (list): An arbitrary number of file ID's from Diffgram.
         :param transform (callable, optional): Optional transforms to be applied on a sample
         """
-        super(DiffgramDatasetIterator, self).__init__(project, diffgram_file_id_list)
-        global torch, Dataset, DataLoader
-        try:
-            import torch as torch  # type: ignore
-            from torch.utils.data import Dataset, DataLoader
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                "'torch' module should be installed to convert the Dataset into pytorch format"
-            )
+        super(DiffgramPytorchDataset, self).__init__(project, diffgram_file_id_list)
+
         self.diffgram_file_id_list = diffgram_file_id_list
 
         self.project = project
         self.transform = transform
-        self.__validate_file_ids()
 
     def __len__(self):
         return len(self.diffgram_file_id_list)

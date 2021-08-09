@@ -1,17 +1,21 @@
 from diffgram.core.directory import Directory
 from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
 
+
 class SlicedDirectory(Directory):
 
     def __init__(self, client, original_directory: Directory, query: str):
         self.original_directory = original_directory
         self.query = query
         self.client = client
+        # Share the same ID from the original directory as this is just an in-memory construct for better semantics.
+        self.id = original_directory.id
 
     def all_file_ids(self):
         page_num = 1
         result = []
         while page_num is not None:
+            print('slcied query', self.query)
             diffgram_files = self.list_files(limit = 1000,
                                              page_num = page_num,
                                              file_view_mode = 'ids_only',
@@ -19,7 +23,6 @@ class SlicedDirectory(Directory):
             page_num = self.file_list_metadata['next_page']
             result = result + diffgram_files
         return result
-
 
     def to_pytorch(self, transform = None):
         """
@@ -34,4 +37,3 @@ class SlicedDirectory(Directory):
 
         )
         return pytorch_dataset
-

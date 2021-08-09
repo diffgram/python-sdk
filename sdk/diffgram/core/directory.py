@@ -96,17 +96,19 @@ class Directory():
 		page_num = 1
 		result = []
 		while page_num is not None:
-			diffgram_files = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'ids_only')
+			diffgram_ids = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'ids_only')
 			page_num = self.file_list_metadata['next_page']
-			result = result + diffgram_files
+			result = result + diffgram_ids
 		return result
 
 	def slice(self, query):
 		from diffgram.core.sliced_directory import SlicedDirectory
-		result = self.list_files(
+		# Get the first page to validate syntax.
+		self.list_files(
 			limit = 25,
 			page_num = 1,
-			file_view_mode = 'ids_only'
+			file_view_mode = 'ids_only',
+			query = query,
 		)
 		sliced_dataset = SlicedDirectory(
 			client = self.client,
@@ -120,7 +122,6 @@ class Directory():
 			Transforms the file list inside the dataset into a pytorch dataset.
 		:return:
 		"""
-		from diffgram.core.sliced_directory import SlicedDirectory
 		file_id_list = self.all_file_ids()
 		pytorch_dataset = DiffgramPytorchDataset(
 			project = self.client,
@@ -211,7 +212,6 @@ class Directory():
 		else:
 			logging.info("Using Default Dataset ID " + str(self.client.directory_id))
 			directory_id = self.client.directory_id
-		#print("directory_id", directory_id)
 
 		metadata = {'metadata' :
 			{
@@ -222,7 +222,8 @@ class Directory():
 				'media_type': "All",
 				'page': page_num,
 				'file_view_mode': file_view_mode,
-				'search_term': search_term
+				'search_term': search_term,
+				'query': query
 			}
 		}
 
@@ -245,14 +246,17 @@ class Directory():
 		self.file_list_metadata = data.get('metadata')
 		# TODO would like this to perhaps be a seperate function
 		# ie part of File_Constructor perhaps
-		file_list = []
-		for file_json in file_list_json:
-			file = File.new(
-				client = self.client,
-				file_json = file_json)
-			file_list.append(file)
+		if file_view_mode == 'ids_only':
+			return file_list_json
+		else:
+			file_list = []
+			for file_json in file_list_json:
+				file = File.new(
+					client = self.client,
+					file_json = file_json)
+				file_list.append(file)
 
-		return file_list
+			return file_list
 
 
 	def get(self, 
