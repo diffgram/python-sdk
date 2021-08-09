@@ -4,6 +4,7 @@
 .vs/PythonSettings.json
 .vs/VSWorkspaceState.json
 
+*.pyc
 .idea/
 
 sdk/diffgram/__pycache__/
