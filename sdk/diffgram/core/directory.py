@@ -3,6 +3,8 @@ from ..regular.regular import refresh_from_dict
 import logging
 from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
 from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
+from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
+
 
 def get_directory_list(self):
 	"""
@@ -70,14 +72,19 @@ def set_directory_by_name(self, name):
 				  str(names_attempted))
 
 
-class Directory():
+class Directory(DiffgramDatasetIterator):
 
-	def __init__(self,
-			     client):
+	def __init__(self, client, file_id_list_sliced = None):
 
 		self.client = client
 		self.id = None
 		self.file_list_metadata = {}
+		
+		if file_id_list_sliced is None:
+			self.file_id_list = self.all_file_ids()
+		else:
+			self.file_id_list = file_id_list_sliced
+		super(Directory, self).__init__(self.client, self.file_id_list)
 
 	def all_files(self):
 		"""

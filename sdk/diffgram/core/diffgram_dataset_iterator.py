@@ -21,6 +21,14 @@ class DiffgramDatasetIterator:
         self.current_file_index = 0
         return self
 
+    def __len__(self):
+        return len(self.diffgram_file_id_list)
+
+    def __getitem__(self, idx):
+        diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True)
+        instance_data = self.get_file_instances(diffgram_file)
+        return instance_data
+
     def __next__(self):
         file_id = self.diffgram_file_id_list[self.current_file_index]
         diffgram_file = self.project.file.get_by_id(file_id, with_instances = True)

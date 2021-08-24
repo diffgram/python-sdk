@@ -11,6 +11,8 @@ class SlicedDirectory(Directory):
         self.client = client
         # Share the same ID from the original directory as this is just an in-memory construct for better semantics.
         self.id = original_directory.id
+        self.file_id_list = self.all_file_ids()
+        super(Directory, self).__init__(self.client, self.file_id_list)
 
     def all_file_ids(self):
         page_num = 1
@@ -29,10 +31,10 @@ class SlicedDirectory(Directory):
             Transforms the file list inside the dataset into a pytorch dataset.
         :return:
         """
-        file_id_list = self.all_file_ids()
+
         pytorch_dataset = DiffgramPytorchDataset(
             project = self.client,
-            diffgram_file_id_list = file_id_list,
+            diffgram_file_id_list = self.file_id_list,
             transform = transform
 
         )
