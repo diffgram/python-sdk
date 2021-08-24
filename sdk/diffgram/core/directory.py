@@ -79,7 +79,7 @@ class Directory(DiffgramDatasetIterator):
 		self.client = client
 		self.id = None
 		self.file_list_metadata = {}
-		
+
 		if file_id_list_sliced is None:
 			self.file_id_list = self.all_file_ids()
 		else:
@@ -145,8 +145,7 @@ class Directory(DiffgramDatasetIterator):
 			project = self.client,
 			diffgram_file_id_list = file_id_list
 		)
-		tf_dataset = diffgram_tensorflow_dataset.get_dataset_obj()
-		return tf_dataset
+		return diffgram_tensorflow_dataset
 
 	def new(self, name: str):
 		"""

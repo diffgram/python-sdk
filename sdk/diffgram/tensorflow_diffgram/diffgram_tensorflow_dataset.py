@@ -1,11 +1,13 @@
 from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 import os
+
 try:
     import tensorflow as tf  # type: ignore
 except ModuleNotFoundError:
     raise ModuleNotFoundError(
         "'tensorflow' module should be installed to convert the Dataset into tensorflow format"
     )
+
 
 class DiffgramTensorflowDataset(DiffgramDatasetIterator):
 
@@ -47,17 +49,13 @@ class DiffgramTensorflowDataset(DiffgramDatasetIterator):
             raise Exception(
                 'Some file IDs do not belong to the project. Please provide only files from the same project.')
 
-    def __iter__(self):
-        self.current_file_index = 0
-        return self
+    def __getitem__(self, idx):
+        tf_example = self.get_tf_train_example(idx)
+        return tf_example
 
-    def get_next_elm(self):
-        yield self.__next__()
-
-    def __next__(self):
-        file_id = self.diffgram_file_id_list[self.current_file_index]
+    def get_tf_train_example(self, idx):
+        file_id = self.diffgram_file_id_list[idx]
         diffgram_file = self.project.file.get_by_id(file_id, with_instances = True)
-        print('AAA', diffgram_file.id)
         image = self.get_image_data(diffgram_file)
         instance_data = self.get_file_instances(diffgram_file)
         filename, file_extension = os.path.splitext(instance_data['diffgram_file'].image['original_filename'])
@@ -77,8 +75,12 @@ class DiffgramTensorflowDataset(DiffgramDatasetIterator):
             'image/object/class/label': self.int64_list_feature(instance_data['label_id_list']),
         }
         tf_example = tf.train.Example(features = tf.train.Features(feature = tf_example_dict))
+        return tf_example
+
+    def __next__(self):
+        tf_example = self.get_tf_train_example(self.current_file_index)
         self.current_file_index += 1
         return tf_example
 
-    def get_dataset_obj(self):
-        return tf.data.Dataset.from_generator(self.get_next_elm, output_signature = tf.TensorSpec(shape=(1,)))
+    # def get_dataset_obj(self):
+    #     return tf.data.Dataset.from_generator(self.get_next_elm, output_signature = tf.TensorSpec(shape = (1,)))

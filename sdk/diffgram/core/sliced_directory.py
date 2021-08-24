@@ -46,5 +46,4 @@ class SlicedDirectory(Directory):
             project = self.client,
             diffgram_file_id_list = file_id_list
         )
-        tf_dataset = diffgram_tensorflow_dataset.get_dataset_obj()
-        return tf_dataset
+        return diffgram_tensorflow_dataset
