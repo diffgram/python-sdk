@@ -1,5 +1,6 @@
 from diffgram.core.directory import Directory
 from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
+from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
 
 
 class SlicedDirectory(Directory):
@@ -15,7 +16,6 @@ class SlicedDirectory(Directory):
         page_num = 1
         result = []
         while page_num is not None:
-            print('slcied query', self.query)
             diffgram_files = self.list_files(limit = 1000,
                                              page_num = page_num,
                                              file_view_mode = 'ids_only',
@@ -37,3 +37,12 @@ class SlicedDirectory(Directory):
 
         )
         return pytorch_dataset
+
+    def to_tensorflow(self):
+        file_id_list = self.all_file_ids()
+        diffgram_tensorflow_dataset = DiffgramTensorflowDataset(
+            project = self.client,
+            diffgram_file_id_list = file_id_list
+        )
+        tf_dataset = diffgram_tensorflow_dataset.get_dataset_obj()
+        return tf_dataset

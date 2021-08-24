@@ -2,6 +2,7 @@ from diffgram.file.file import File
 from ..regular.regular import refresh_from_dict
 import logging
 from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
+from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
 
 def get_directory_list(self):
 	"""
@@ -130,6 +131,15 @@ class Directory():
 
 		)
 		return pytorch_dataset
+
+	def to_tensorflow(self):
+		file_id_list = self.all_file_ids()
+		diffgram_tensorflow_dataset = DiffgramTensorflowDataset(
+			project = self.client,
+			diffgram_file_id_list = file_id_list
+		)
+		tf_dataset = diffgram_tensorflow_dataset.get_dataset_obj()
+		return tf_dataset
 
 	def new(self, name: str):
 		"""

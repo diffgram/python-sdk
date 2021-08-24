@@ -38,6 +38,8 @@ def display_masks():
 dataset = project.directory.get('Default')
 
 pytorch_dataset = dataset.to_pytorch()
+tf_dataset = dataset.to_tensorflow()
+
 
 sliced_dataset = dataset.slice(query = 'labels.sheep  > 0 or labels.sofa > 0')
 
