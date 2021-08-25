@@ -1,7 +1,7 @@
 from diffgram.core.directory import Directory
 from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
 from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
-import urllib
+
 
 class SlicedDirectory(Directory):
 
@@ -25,21 +25,6 @@ class SlicedDirectory(Directory):
             page_num = self.file_list_metadata['next_page']
             result = result + diffgram_files
         return result
-
-    def explore(self):
-
-
-        payload = {'dataset_id': self.original_directory.id, 'query': self.query}
-        params = urllib.parse.urlencode(payload, quote_via = urllib.parse.quote)
-
-        message = '{}/studio/annotate/{}/explorer?{}'.format(
-            self.client.host,
-            self.project.project_string_id,
-            params
-
-        )
-        print('\033[92m' + 'To Explore your dataset visit:' + '\033[0m')
-        print('\033[96m' + message +  '\033[0m')
 
     def to_pytorch(self, transform = None):
         """

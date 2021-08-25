@@ -109,15 +109,6 @@ class Directory(DiffgramDatasetIterator):
 			result = result + diffgram_ids
 		return result
 
-	def explore(self):
-		message = '{}/studio/annotate/{}/explorer?dataset_id={}'.format(
-			self.client.host,
-			self.project.project_string_id,
-			self.id
-		)
-		print('\033[92m' + 'To Explore your dataset visit:' + '\033[0m')
-		print('\033[96m' + message + '\033[0m')
-
 	def slice(self, query):
 		from diffgram.core.sliced_directory import SlicedDirectory
 		# Get the first page to validate syntax.
