@@ -49,12 +49,10 @@ class Project():
 			self.host = host
 		self.directory_id = None
 		self.name_to_file_id = None
-
 		self.auth(
 			project_string_id = project_string_id,
 			client_id = client_id, 
 			client_secret = client_secret)
-
 		self.file = FileConstructor(self)
 		self.train = Train(self)
 		self.job = Job(self)

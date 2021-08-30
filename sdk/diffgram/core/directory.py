@@ -74,15 +74,16 @@ def set_directory_by_name(self, name):
 
 class Directory(DiffgramDatasetIterator):
 
-	def __init__(self, client, file_id_list_sliced = None):
+	def __init__(self, client, file_id_list_sliced = None, init_file_ids = True):
 
 		self.client = client
 		self.id = None
 		self.file_list_metadata = {}
-
-		if file_id_list_sliced is None:
+		if file_id_list_sliced is None and init_file_ids:
 			self.file_id_list = self.all_file_ids()
-		else:
+		elif not init_file_ids:
+			self.file_id_list = []
+		elif file_id_list_sliced is not None:
 			self.file_id_list = file_id_list_sliced
 		super(Directory, self).__init__(self.client, self.file_id_list)
 
@@ -95,6 +96,7 @@ class Directory(DiffgramDatasetIterator):
 		page_num = 1
 		result = []
 		while page_num is not None:
+
 			diffgram_files = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'base')
 			page_num = self.file_list_metadata['next_page']
 			result = result + diffgram_files
@@ -104,7 +106,8 @@ class Directory(DiffgramDatasetIterator):
 		page_num = 1
 		result = []
 		while page_num is not None:
-			diffgram_ids = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'ids_only')
+			print('page', page_num, self.file_list_metadata)
+			diffgram_ids = self.list_files(limit = 25000, page_num = page_num, file_view_mode = 'ids_only')
 			page_num = self.file_list_metadata['next_page']
 			result = result + diffgram_ids
 		return result

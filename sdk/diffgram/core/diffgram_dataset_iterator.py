@@ -37,6 +37,8 @@ class DiffgramDatasetIterator:
         return instance_data
 
     def __validate_file_ids(self):
+        if not self.diffgram_file_id_list:
+            return
         result = self.project.file.file_list_exists(self.diffgram_file_id_list)
         if not result:
             raise Exception(
