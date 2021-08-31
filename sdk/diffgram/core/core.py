@@ -57,10 +57,10 @@ class Project():
 		self.train = Train(self)
 		self.job = Job(self)
 		self.guide = Guide(self)
-		self.directory = Directory(self)
+		self.directory = Directory(self, validate_ids = False)
 		self.export = Export(self)
 		self.task = Task(client = self)
-
+		
 	def get_member_list(self):
 		url = '/api/project/{}/view'.format(self.project_string_id)
 		response = self.session.get(url=self.host + url)

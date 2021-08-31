@@ -4,7 +4,7 @@ import numpy as np
 
 class DiffgramDatasetIterator:
 
-    def __init__(self, project, diffgram_file_id_list):
+    def __init__(self, project, diffgram_file_id_list, validate_ids = True):
         """
 
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
@@ -14,7 +14,8 @@ class DiffgramDatasetIterator:
 
         self.project = project
         self._internal_file_list = []
-        self.__validate_file_ids()
+        if validate_ids:
+            self.__validate_file_ids()
         self.current_file_index = 0
 
     def __iter__(self):
