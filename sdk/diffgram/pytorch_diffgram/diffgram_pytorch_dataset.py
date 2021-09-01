@@ -5,14 +5,14 @@ from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 
 class DiffgramPytorchDataset(DiffgramDatasetIterator, Dataset):
 
-    def __init__(self, project, diffgram_file_id_list = None, transform = None):
+    def __init__(self, project, diffgram_file_id_list = None, transform = None, validate_ids = True):
         """
 
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
         :param diffgram_file_list (list): An arbitrary number of file ID's from Diffgram.
         :param transform (callable, optional): Optional transforms to be applied on a sample
         """
-        super(DiffgramPytorchDataset, self).__init__(project, diffgram_file_id_list)
+        super(DiffgramPytorchDataset, self).__init__(project, diffgram_file_id_list, validate_ids)
 
         self.diffgram_file_id_list = diffgram_file_id_list
 

@@ -11,14 +11,14 @@ except ModuleNotFoundError:
 
 class DiffgramTensorflowDataset(DiffgramDatasetIterator):
 
-    def __init__(self, project, diffgram_file_id_list):
+    def __init__(self, project, diffgram_file_id_list, validate_ids = True):
         """
 
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
         :param diffgram_file_list (list): An arbitrary number of file ID's from Diffgram.
         :param transform (callable, optional): Optional transforms to be applied on a sample
         """
-        super(DiffgramTensorflowDataset, self).__init__(project, diffgram_file_id_list)
+        super(DiffgramTensorflowDataset, self).__init__(project, diffgram_file_id_list, validate_ids)
 
         self.diffgram_file_id_list = diffgram_file_id_list
 

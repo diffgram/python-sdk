@@ -50,7 +50,8 @@ class SlicedDirectory(Directory):
         pytorch_dataset = DiffgramPytorchDataset(
             project = self.client,
             diffgram_file_id_list = self.file_id_list,
-            transform = transform
+            transform = transform,
+            validate_ids = False
 
         )
         return pytorch_dataset
@@ -59,6 +60,7 @@ class SlicedDirectory(Directory):
         file_id_list = self.all_file_ids()
         diffgram_tensorflow_dataset = DiffgramTensorflowDataset(
             project = self.client,
-            diffgram_file_id_list = file_id_list
+            diffgram_file_id_list = file_id_list,
+            validate_ids = False
         )
         return diffgram_tensorflow_dataset

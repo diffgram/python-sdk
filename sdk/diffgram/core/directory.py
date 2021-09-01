@@ -152,20 +152,22 @@ class Directory(DiffgramDatasetIterator):
             Transforms the file list inside the dataset into a pytorch dataset.
         :return:
         """
-        file_id_list = self.all_file_ids()
+        file_id_list = self.file_id_list
         pytorch_dataset = DiffgramPytorchDataset(
             project = self.client,
             diffgram_file_id_list = file_id_list,
-            transform = transform
+            transform = transform,
+            validate_ids = False
 
         )
         return pytorch_dataset
 
     def to_tensorflow(self):
-        file_id_list = self.all_file_ids()
+        file_id_list = self.file_id_list
         diffgram_tensorflow_dataset = DiffgramTensorflowDataset(
             project = self.client,
-            diffgram_file_id_list = file_id_list
+            diffgram_file_id_list = file_id_list,
+            validate_ids = False
         )
         return diffgram_tensorflow_dataset
 
