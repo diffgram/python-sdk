@@ -14,7 +14,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/diffgram/python-sdk",
     packages=setuptools.find_packages(
-		exclude=["test", "samples", "ops_scripts"]),
+		exclude=["test", "samples", "ops_scripts", "__pycache__"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
