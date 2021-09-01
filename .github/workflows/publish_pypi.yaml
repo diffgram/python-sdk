@@ -31,6 +31,8 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y twine
     - name: Build Dist
-      run: python setup.py sdist bdist_wheel
+      run: |
+        cd sdk
+        python setup.py sdist bdist_wheel
     - name: Upload with Twine
       run: twine upload dist/* --skip-existing --username ${{ secrets.TWINE_PASSWORD }} --password ${{ secrets.TWINE_USERNAME }}
