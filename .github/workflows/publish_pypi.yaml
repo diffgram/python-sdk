@@ -31,6 +31,8 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y twine
     - name: Build Dist
+      env:
+        DIFFGRAM_SDK_VERSION: ${{ env.RELEASE_VERSION }}
       run: |
         cd sdk
         python setup.py sdist bdist_wheel
