@@ -24,8 +24,8 @@ jobs:
       run: echo ${{ steps.tag.outputs.result }}
     - name: Install Dependencies
       run: |
-      cd sdk
-      pip install -r requirements.txt
+        cd sdk
+        pip install -r requirements.txt
     - name: Install Twine
       run: |
         sudo apt-get update -y
