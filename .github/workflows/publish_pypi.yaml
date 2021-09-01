@@ -37,4 +37,4 @@ jobs:
     - name: Upload with Twine
       run: |
         cd sdk
-        twine upload dist/* --skip-existing --username ${{ secrets.TWINE_PASSWORD }} --password ${{ secrets.TWINE_USERNAME }}
+        twine upload dist/* --skip-existing --username ${{ secrets.TWINE_USERNAME }} --password ${{ secrets.TWINE_PASSWORD }}
