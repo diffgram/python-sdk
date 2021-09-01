@@ -62,7 +62,8 @@ class File():
         packet['instance_list'] = instance_list
 
         # Current default server side is to not overwrite
-        # packet['overwrite'] = overwrite
+        if overwrite:
+            packet['mode'] = "update_with_existing"
 
         self.client.file.from_packet(packet=packet)
 
