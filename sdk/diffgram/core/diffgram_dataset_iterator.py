@@ -132,9 +132,9 @@ class DiffgramDatasetIterator:
         for inst in instance_list:
             if inst['type'] != 'box':
                 continue
-            x_min_list.append(inst['x_min'] / diffgram_file.image['width'])
-            x_max_list.append(inst['x_max'] / diffgram_file.image['width'])
-            y_min_list.append(inst['y_min'] / diffgram_file.image['width'])
-            y_max_list.append(inst['y_max'] / diffgram_file.image['width'])
+            x_min_list.append(inst['x_min'])
+            x_max_list.append(inst['x_max'])
+            y_min_list.append(inst['y_min'])
+            y_max_list.append(inst['y_max'])
 
         return x_min_list, x_max_list, y_min_list, y_max_list
