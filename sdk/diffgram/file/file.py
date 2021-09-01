@@ -1,6 +1,5 @@
 from ..regular.regular import refresh_from_dict
 
-
 class File():
     """
     file literal object
@@ -11,11 +10,12 @@ class File():
 
     def __init__(
             self,
-            id=None,
-            client=None):
+            id = None,
+            client = None):
         self.id = id
         self.client = client
 
+    @staticmethod
     def new(
             client,
             file_json):
@@ -62,7 +62,8 @@ class File():
         packet['instance_list'] = instance_list
 
         # Current default server side is to not overwrite
-        # packet['overwrite'] = overwrite
+        if overwrite:
+            packet['mode'] = "update_with_existing"
 
         self.client.file.from_packet(packet=packet)
 

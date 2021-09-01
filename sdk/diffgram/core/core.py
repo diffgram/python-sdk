@@ -240,7 +240,6 @@ class Project():
 			self.directory_id = self.default_directory['id']
 
 			self.directory_list = data["directory_list"]
-
 		self.session.headers.update(
 			{'directory_id': str(self.directory_id)})
 
