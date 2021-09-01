@@ -49,20 +49,18 @@ class Project():
 			self.host = host
 		self.directory_id = None
 		self.name_to_file_id = None
-
 		self.auth(
 			project_string_id = project_string_id,
 			client_id = client_id, 
 			client_secret = client_secret)
-
 		self.file = FileConstructor(self)
 		self.train = Train(self)
 		self.job = Job(self)
 		self.guide = Guide(self)
-		self.directory = Directory(self)
+		self.directory = Directory(self, validate_ids = False)
 		self.export = Export(self)
 		self.task = Task(client = self)
-
+		
 	def get_member_list(self):
 		url = '/api/project/{}/view'.format(self.project_string_id)
 		response = self.session.get(url=self.host + url)

@@ -1,0 +1,34 @@
+name: Publish Docker Images
+on:
+  release:
+    types: [published]
+jobs:
+  Publish-SDK-pypi:
+    runs-on: ubuntu-latest
+    env:
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    - name: Get Release Tag
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Test
+      run: |
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
+    - name: Set Release to Diffgram SDK version
+      run: |
+        export DIFFGRAM_SDK_VERSION=${{ env.RELEASE_VERSION }}
+    - name: Echo
+      run: echo ${{ steps.tag.outputs.result }}
+    - name: Install Twine
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y twine
+    - name: Build Dist
+      run: |
+        cd sdk
+        python setup.py sdist bdist_wheel
+    - name: Upload with Twine
+      run: twine upload dist/* --skip-existing --username ${{ secrets.TWINE_PASSWORD }} --password ${{ secrets.TWINE_USERNAME }}
