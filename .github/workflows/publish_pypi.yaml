@@ -1,4 +1,4 @@
-name: Publish Docker Images
+name: Publish to PyPi
 on:
   release:
     types: [published]
@@ -22,6 +22,10 @@ jobs:
         export DIFFGRAM_SDK_VERSION=${{ env.RELEASE_VERSION }}
     - name: Echo
       run: echo ${{ steps.tag.outputs.result }}
+    - name: Install Dependencies
+      run: |
+        cd sdk
+        pip install -r requirements.txt
     - name: Install Twine
       run: |
         sudo apt-get update -y
@@ -31,4 +35,6 @@ jobs:
         cd sdk
         python setup.py sdist bdist_wheel
     - name: Upload with Twine
-      run: twine upload dist/* --skip-existing --username ${{ secrets.TWINE_PASSWORD }} --password ${{ secrets.TWINE_USERNAME }}
+      run: |
+        cd sdk
+        twine upload dist/* --skip-existing --username ${{ secrets.TWINE_PASSWORD }} --password ${{ secrets.TWINE_USERNAME }}
