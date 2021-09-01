@@ -22,6 +22,8 @@ jobs:
         export DIFFGRAM_SDK_VERSION=${{ env.RELEASE_VERSION }}
     - name: Echo
       run: echo ${{ steps.tag.outputs.result }}
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
     - name: Install Twine
       run: |
         sudo apt-get update -y
