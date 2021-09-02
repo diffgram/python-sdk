@@ -46,8 +46,17 @@ class DiffgramDatasetIterator:
                 'Some file IDs do not belong to the project. Please provide only files from the same project.')
 
     def get_image_data(self, diffgram_file):
+        MAX_RETRIES = 10
         if hasattr(diffgram_file, 'image'):
-            image = imread(diffgram_file.image.get('url_signed'))
+            for i in range(0, MAX_RETRIES):
+                try:
+                    image = imread(diffgram_file.image.get('url_signed'))
+                    break
+                except Exception as e:
+                    if i < MAX_RETRIES:
+                        continue
+                    else:
+                        raise e
             return image
         else:
             raise Exception('Pytorch datasets only support images. Please provide only file_ids from images')
@@ -70,11 +79,18 @@ class DiffgramDatasetIterator:
             sample['x_max_list'] = x_max_list
             sample['y_min_list'] = y_min_list
             sample['y_max_list'] = y_max_list
+        else:
+            sample['x_min_list'] = []
+            sample['x_max_list'] = []
+            sample['y_min_list'] = []
+            sample['y_max_list'] = []
 
         if 'polygon' in instance_types_in_file:
             has_poly = True
             mask_list = self.extract_masks_from_polygon(instance_list, diffgram_file)
             sample['polygon_mask_list'] = mask_list
+        else:
+            sample['polygon_mask_list'] = []
 
         if len(instance_types_in_file) > 2 and has_boxes and has_boxes:
             raise NotImplementedError(
@@ -83,6 +99,7 @@ class DiffgramDatasetIterator:
 
         label_id_list, label_name_list = self.extract_labels(instance_list)
         sample['label_id_list'] = label_id_list
+        sample['instance_types_in_file'] = instance_types_in_file
         sample['label_name_list'] = label_name_list
 
         return sample

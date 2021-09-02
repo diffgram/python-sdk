@@ -28,7 +28,6 @@ class DiffgramPytorchDataset(DiffgramDatasetIterator, Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
         diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True)
 
         sample = self.get_file_instances(diffgram_file)
