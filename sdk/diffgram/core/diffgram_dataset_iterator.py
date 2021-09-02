@@ -53,7 +53,7 @@ class DiffgramDatasetIterator:
                     image = imread(diffgram_file.image.get('url_signed'))
                     break
                 except Exception as e:
-                    if i < MAX_RETRIES:
+                    if i < MAX_RETRIES - 1:
                         continue
                     else:
                         raise e
