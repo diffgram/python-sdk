@@ -54,10 +54,7 @@ class DiffgramTensorflowDataset(DiffgramDatasetIterator):
         return tf_example
 
     def get_tf_train_example(self, idx):
-        file_id = self.diffgram_file_id_list[idx]
-        diffgram_file = self.project.file.get_by_id(file_id, with_instances = True)
-        image = self.get_image_data(diffgram_file)
-        instance_data = self.get_file_instances(diffgram_file)
+        instance_data = super().__getitem__(idx)
         filename, file_extension = os.path.splitext(instance_data['diffgram_file'].image['original_filename'])
         label_names_bytes = [x.encode() for x in instance_data['label_name_list']]
         tf_example_dict = {
@@ -65,7 +62,7 @@ class DiffgramTensorflowDataset(DiffgramDatasetIterator):
             'image/width': self.int64_feature(instance_data['diffgram_file'].image['width']),
             'image/filename': self.bytes_feature(filename.encode()),
             'image/source_id': self.bytes_feature(filename.encode()),
-            'image/encoded': self.bytes_feature(image.tobytes()),
+            'image/encoded': self.bytes_feature(instance_data['image'].tobytes()),
             'image/format': self.bytes_feature(file_extension.encode()),
             'image/object/bbox/xmin': self.float_list_feature(instance_data['x_min_list']),
             'image/object/bbox/xmax': self.float_list_feature(instance_data['x_max_list']),

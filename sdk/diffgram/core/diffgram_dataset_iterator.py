@@ -1,18 +1,29 @@
 from PIL import Image, ImageDraw
 from imageio import imread
 import numpy as np
+import traceback
+import sys
+from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
+
 
 class DiffgramDatasetIterator:
 
-    def __init__(self, project, diffgram_file_id_list, validate_ids = True):
+    def __init__(self, project,
+                 diffgram_file_id_list,
+                 validate_ids = True,
+                 max_size_cache = 1073741824,
+                 max_num_concurrent_fetches = 25):
         """
 
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
         :param diffgram_file_list (list): An arbitrary number of file ID's from Diffgram.
         """
         self.diffgram_file_id_list = diffgram_file_id_list
-
+        self.max_size_cache = max_size_cache
+        self.pool = ThreadPoolExecutor(max_num_concurrent_fetches)
         self.project = project
+        self.file_cache = {}
         self._internal_file_list = []
         if validate_ids:
             self.__validate_file_ids()
@@ -25,15 +36,52 @@ class DiffgramDatasetIterator:
     def __len__(self):
         return len(self.diffgram_file_id_list)
 
-    def __getitem__(self, idx):
+    def save_file_in_cache(self, idx, instance_data):
+        # If size of cache greater than 1GB (Default)
+        if sys.getsizeof(self.file_cache) > self.max_size_cache:
+            keys = list(self.file_cache.keys())
+            latest_keys = keys[:-10]  # Get oldest 10 elements
+            for k in latest_keys:
+                self.file_cache.pop(k)
+
+        self.file_cache[idx] = instance_data
+        print('SAVED CACHE', idx)
+    def get_next_n_items(self, idx, num_items = 25):
+        """
+            Get next N items and save them to cache proactively.
+        :param idx:
+        :param n:
+        :return:
+        """
+        latest_index = idx + num_items
+        if latest_index >= len(self.diffgram_file_id_list):
+            latest_index = len(self.diffgram_file_id_list)
+
+        for i in range(idx + 1, latest_index):
+            self.pool.submit(self.__get_file_data_for_index, (i,))
+        return True
+
+    def __get_file_data_for_index(self, idx):
         diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True)
         instance_data = self.get_file_instances(diffgram_file)
+        self.save_file_in_cache(idx, instance_data)
         return instance_data
 
+    def __getitem__(self, idx):
+        if self.file_cache.get(idx):
+            print('GET CACHE', idx)
+            return self.file_cache.get(idx)
+
+        result = self.__get_file_data_for_index(idx)
+
+        self.get_next_n_items(idx, num_items = 25)
+
+        return result
+
     def __next__(self):
-        file_id = self.diffgram_file_id_list[self.current_file_index]
-        diffgram_file = self.project.file.get_by_id(file_id, with_instances = True)
-        instance_data = self.get_file_instances(diffgram_file)
+        if self.file_cache.get(self.current_file_index):
+            return self.file_cache.get(self.current_file_index)
+        instance_data = self.__get_file_data_for_index(self.current_file_index)
         self.current_file_index += 1
         return instance_data
 
@@ -56,7 +104,9 @@ class DiffgramDatasetIterator:
                     if i < MAX_RETRIES - 1:
                         continue
                     else:
-                        raise e
+                        print('Fetch Image Failed: Diffgram File ID: {}'.format(diffgram_file.id))
+                        print(traceback.format_exc())
+                        return None
             return image
         else:
             raise Exception('Pytorch datasets only support images. Please provide only file_ids from images')
