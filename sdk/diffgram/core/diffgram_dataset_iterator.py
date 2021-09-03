@@ -62,7 +62,7 @@ class DiffgramDatasetIterator:
         return True
 
     def __get_file_data_for_index(self, idx):
-        diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True)
+        diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True, use_session = False)
         instance_data = self.get_file_instances(diffgram_file)
         self.save_file_in_cache(idx, instance_data)
         return instance_data
@@ -87,7 +87,7 @@ class DiffgramDatasetIterator:
     def __validate_file_ids(self):
         if not self.diffgram_file_id_list:
             return
-        result = self.project.file.file_list_exists(self.diffgram_file_id_list)
+        result = self.project.file.file_list_exists(self.diffgram_file_id_list, use_session = False)
         if not result:
             raise Exception(
                 'Some file IDs do not belong to the project. Please provide only files from the same project.')

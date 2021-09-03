@@ -4,7 +4,8 @@ from diffgram.convert.convert import convert_label
 from diffgram.job.job import Job
 import json
 import os
-
+import requests
+from requests.auth import HTTPDigestAuth
 
 class FileConstructor():
     """
@@ -401,7 +402,7 @@ class FileConstructor():
 
         raise NotImplementedError
 
-    def file_list_exists(self, id_list):
+    def file_list_exists(self, id_list, use_session = True):
         """
             Verifies that the given ID list exists inside the project.
         :param id_list:
@@ -413,10 +414,16 @@ class FileConstructor():
         spec_dict = {
             'file_id_list': id_list
         }
-        response = self.client.session.post(
-            self.client.host + url,
-            json = spec_dict)
-
+        if use_session:
+            response = self.client.session.post(
+                self.client.host + url,
+                json = spec_dict)
+        else:
+            response = requests.post(
+                url = self.client.host + url,
+                json = spec_dict,
+                auth = HTTPDigestAuth(self.client.client_id, self.client.client_secret)
+            )
         self.client.handle_errors(response)
 
         response_json = response.json()
@@ -428,7 +435,8 @@ class FileConstructor():
 
     def get_by_id(self,
                   id: int,
-                  with_instances: bool = False):
+                  with_instances: bool = False,
+                  use_session = True):
         """
         returns Diffgram File object
         """
@@ -450,9 +458,15 @@ class FileConstructor():
             }
             file_response_key = 'file_serialized'
 
-        response = self.client.session.post(
-            self.client.host + endpoint,
-            json = spec_dict)
+        if use_session:
+            response = self.client.session.post(
+                self.client.host + endpoint,
+                json = spec_dict)
+        else:
+            # Add Auth
+            response = requests.post(self.client.host + endpoint,
+                          json = spec_dict,
+                          auth = HTTPDigestAuth(self.client.client_id, self.client.client_secret))
 
         self.client.handle_errors(response)
 
