@@ -69,7 +69,6 @@ class DiffgramDatasetIterator:
 
     def __getitem__(self, idx):
         if self.file_cache.get(idx):
-            print('GET CACHE', idx)
             return self.file_cache.get(idx)
 
         result = self.__get_file_data_for_index(idx)
