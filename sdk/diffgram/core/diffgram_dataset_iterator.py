@@ -45,7 +45,7 @@ class DiffgramDatasetIterator:
                 self.file_cache.pop(k)
 
         self.file_cache[idx] = instance_data
-        print('SAVED CACHE', idx)
+
     def get_next_n_items(self, idx, num_items = 25):
         """
             Get next N items and save them to cache proactively.
