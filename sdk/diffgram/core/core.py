@@ -33,6 +33,9 @@ class Project():
 		):
 
 		self.session = requests.Session()
+		adapter = requests.adapters.HTTPAdapter(pool_connections = 30, pool_maxsize = 30)
+		self.session.mount('http://', adapter)
+		self.session.mount('https://', adapter)
 		self.project_string_id = None
 
 		self.debug = debug
