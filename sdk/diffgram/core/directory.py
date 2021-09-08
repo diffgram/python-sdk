@@ -101,20 +101,23 @@ class Directory(DiffgramDatasetIterator):
             result = result + diffgram_files
         return result
 
-    def all_file_ids(self):
+    def all_file_ids(self, query = None):
         page_num = 1
         result = []
 
-        diffgram_ids = self.list_files(limit = 5000, page_num = page_num, file_view_mode = 'ids_only')
+        diffgram_ids = self.list_files(limit = 5000, page_num = page_num, file_view_mode = 'ids_only', query = query)
+        if diffgram_ids is False:
+            raise Exception('Error Fetching Files: Please check you are providing a valid query.')
         result = result + diffgram_ids
         page_num = self.file_list_metadata['next_page']
         total_pages = self.file_list_metadata['total_pages']
         pool = Pool(20)
 
         pool_results = []
-        for i in range(page_num, total_pages + 1):
-            result_async = pool.apply_async(self.list_files, (i, 5000, None, 'ids_only', None))
-            pool_results.append(result_async)
+        if page_num is not None:
+            for i in range(page_num, total_pages + 1):
+                result_async = pool.apply_async(self.list_files, (i, 5000, None, 'ids_only', None))
+                pool_results.append(result_async)
 
         for pool_result in pool_results:
             file_ids = pool_result.get()
