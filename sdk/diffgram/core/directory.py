@@ -114,9 +114,10 @@ class Directory(DiffgramDatasetIterator):
         pool = Pool(20)
 
         pool_results = []
-        for i in range(page_num, total_pages + 1):
-            result_async = pool.apply_async(self.list_files, (i, 5000, None, 'ids_only', None))
-            pool_results.append(result_async)
+        if page_num is not None:
+            for i in range(page_num, total_pages + 1):
+                result_async = pool.apply_async(self.list_files, (i, 5000, None, 'ids_only', None))
+                pool_results.append(result_async)
 
         for pool_result in pool_results:
             file_ids = pool_result.get()
