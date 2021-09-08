@@ -101,11 +101,13 @@ class Directory(DiffgramDatasetIterator):
             result = result + diffgram_files
         return result
 
-    def all_file_ids(self):
+    def all_file_ids(self, query = None):
         page_num = 1
         result = []
 
-        diffgram_ids = self.list_files(limit = 5000, page_num = page_num, file_view_mode = 'ids_only')
+        diffgram_ids = self.list_files(limit = 5000, page_num = page_num, file_view_mode = 'ids_only', query = query)
+        if diffgram_ids is False:
+            raise Exception('Error Fetching Files: Please check you are providing a valid query.')
         result = result + diffgram_ids
         page_num = self.file_list_metadata['next_page']
         total_pages = self.file_list_metadata['total_pages']

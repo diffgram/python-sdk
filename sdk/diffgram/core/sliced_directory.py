@@ -15,16 +15,7 @@ class SlicedDirectory(Directory):
         super(Directory, self).__init__(self.client, self.file_id_list)
 
     def all_file_ids(self):
-        page_num = 1
-        result = []
-        while page_num is not None:
-            diffgram_files = self.list_files(limit = 1000,
-                                             page_num = page_num,
-                                             file_view_mode = 'ids_only',
-                                             query = self.query)
-            page_num = self.file_list_metadata['next_page']
-            result = result + diffgram_files
-        return result
+        return super().all_file_ids(query = self.query)
 
     def explore(self):
 
