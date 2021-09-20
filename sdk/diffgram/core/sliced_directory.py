@@ -1,5 +1,4 @@
 from diffgram.core.directory import Directory
-from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
 from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
 import urllib
 
@@ -37,7 +36,7 @@ class SlicedDirectory(Directory):
             Transforms the file list inside the dataset into a pytorch dataset.
         :return:
         """
-
+        from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
         pytorch_dataset = DiffgramPytorchDataset(
             project = self.client,
             diffgram_file_id_list = self.file_id_list,
