@@ -87,7 +87,7 @@ class DiffgramDatasetIterator:
     def __validate_file_ids(self):
         if not self.diffgram_file_id_list:
             return
-        result = self.project.file.file_list_exists(self.diffgram_file_id_list, use_session = True)
+        result = self.project.file.file_list_exists(self.diffgram_file_id_list, use_session = False)
         if not result:
             raise Exception(
                 'Some file IDs do not belong to the project. Please provide only files from the same project.')
