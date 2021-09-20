@@ -1,7 +1,6 @@
 from diffgram.file.file import File
 from ..regular.regular import refresh_from_dict
 import logging
-from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
 from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
 from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 from multiprocessing.pool import ThreadPool as Pool
@@ -155,6 +154,7 @@ class Directory(DiffgramDatasetIterator):
             Transforms the file list inside the dataset into a pytorch dataset.
         :return:
         """
+        from diffgram.pytorch_diffgram.diffgram_pytorch_dataset import DiffgramPytorchDataset
         file_id_list = self.file_id_list
         pytorch_dataset = DiffgramPytorchDataset(
             project = self.client,
