@@ -1,5 +1,4 @@
 import requests
-from requests.auth import HTTPDigestAuth
 
 
 def get_file_id():
@@ -49,7 +48,7 @@ def get_label_file_dict(self, use_session = True):
         # Add Auth
         response = requests.get(self.host + endpoint,
                                 headers = {'directory_id': str(self.directory_id)},
-                                auth = HTTPDigestAuth(self.client_id, self.client_secret))
+                                auth = self.client.get_http_auth())
 
     self.handle_errors(response)
 

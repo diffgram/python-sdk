@@ -17,6 +17,7 @@ from diffgram.file.file import File
 from diffgram.brain.train import Train
 from diffgram.export.export import Export
 from diffgram.task.task import Task
+from requests.auth import HTTPBasicAuth
 
 
 class Project():
@@ -72,6 +73,9 @@ class Project():
 		self.handle_errors(response)
 		data = response.json()
 		return data['project']['member_list']
+
+	def get_http_auth(self):
+		return HTTPBasicAuth(self.client_id, self.client_secret)
 
 	def get_label(
 			self,
