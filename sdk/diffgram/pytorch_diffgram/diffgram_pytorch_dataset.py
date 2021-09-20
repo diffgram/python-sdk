@@ -1,7 +1,12 @@
 from torch.utils.data import Dataset, DataLoader
-import torch as torch  # type: ignore
 from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 
+try:
+    import torch as torch  # type: ignore
+except ModuleNotFoundError:
+    raise ModuleNotFoundError(
+        "'torch' module should be installed to convert the Dataset into torch (pytorch) format"
+    )
 
 class DiffgramPytorchDataset(DiffgramDatasetIterator, Dataset):
 
