@@ -5,7 +5,6 @@ from diffgram.job.job import Job
 import json
 import os
 import requests
-from requests.auth import HTTPDigestAuth
 
 class FileConstructor():
     """
@@ -422,7 +421,7 @@ class FileConstructor():
             response = requests.post(
                 url = self.client.host + url,
                 json = spec_dict,
-                auth = HTTPDigestAuth(self.client.client_id, self.client.client_secret)
+                auth = self.client.get_http_auth()
             )
         self.client.handle_errors(response)
 
@@ -466,7 +465,7 @@ class FileConstructor():
             # Add Auth
             response = requests.post(self.client.host + endpoint,
                           json = spec_dict,
-                          auth = HTTPDigestAuth(self.client.client_id, self.client.client_secret))
+                          auth = self.client.get_http_auth())
 
         self.client.handle_errors(response)
 
