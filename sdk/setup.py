@@ -25,6 +25,7 @@ setuptools.setup(
 	   'opencv-python>=4.0.0.21',
 	   'scipy>=1.1.0',
 	   'six>=1.9.0',
-	   'pillow>=6.1.0'
+	   'pillow>=6.1.0',
+       'imageio>=2.9.0'
 	]
 )
