@@ -1,7 +1,6 @@
 from diffgram.file.file import File
 from ..regular.regular import refresh_from_dict
 import logging
-from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
 from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 from multiprocessing.pool import ThreadPool as Pool
 
@@ -166,6 +165,7 @@ class Directory(DiffgramDatasetIterator):
         return pytorch_dataset
 
     def to_tensorflow(self):
+        from diffgram.tensorflow_diffgram.diffgram_tensorflow_dataset import DiffgramTensorflowDataset
         file_id_list = self.file_id_list
         diffgram_tensorflow_dataset = DiffgramTensorflowDataset(
             project = self.client,
