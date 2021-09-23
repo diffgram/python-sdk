@@ -374,7 +374,7 @@ class Job():
             kind='Annotations',
             return_type="data",
             wait_for_export_generation=True,
-            ann_is_complete=True
+            ann_is_complete=None    # Bool. None=='all', True=='complete' tasks only
     ):
         """
 
