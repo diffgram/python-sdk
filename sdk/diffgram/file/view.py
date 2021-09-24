@@ -48,7 +48,7 @@ def get_label_file_dict(self, use_session = True):
         # Add Auth
         response = requests.get(self.host + endpoint,
                                 headers = {'directory_id': str(self.directory_id)},
-                                auth = self.client.get_http_auth())
+                                auth = self.get_http_auth())
 
     self.handle_errors(response)
 
