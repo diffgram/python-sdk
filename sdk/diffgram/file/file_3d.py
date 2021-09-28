@@ -15,11 +15,26 @@ class File3D:
         self.client = client
         self.point_list = point_list
 
-    def add_point(self, x: float, y: float, z: float):
+    def add_point(self,
+                  x: float,
+                  y: float,
+                  z: float,
+                  intensity = None,
+                  device_id = None,
+                  timestamp = None,
+                  is_ground = False):
+
+        if intensity is not None and intensity > 1.0 or intensity < 0:
+            raise Exception('Intensity point must be between 0 and 1. Value is: {}'.format(intensity))
+
         self.point_list.append({
             'x': x,
             'y': y,
-            'z': z
+            'z': z,
+            'intensity': intensity,
+            'device_id': device_id,
+            'timestamp': timestamp,
+            'is_ground': is_ground,
         })
         return self.point_list
 
