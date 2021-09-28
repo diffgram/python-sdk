@@ -84,6 +84,5 @@ class File3D:
                                                     files = files)
 
                 self.client.handle_errors(response)
-                # print(payload)
 
             return True
