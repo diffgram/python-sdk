@@ -11,8 +11,9 @@ class File3D:
     point_list: list
     client: Project
 
-    def __init__(self, client, point_list = []):
+    def __init__(self, client, name, point_list = []):
         self.client = client
+        self.original_filename = name
         self.point_list = point_list
 
     def add_point(self,
@@ -24,8 +25,9 @@ class File3D:
                   timestamp = None,
                   is_ground = False):
 
-        if intensity is not None and intensity > 1.0 or intensity < 0:
-            raise Exception('Intensity point must be between 0 and 1. Value is: {}'.format(intensity))
+        if intensity is not None:
+            if intensity > 1.0 or intensity < 0:
+                raise Exception('Intensity point must be between 0 and 1. Value is: {}'.format(intensity))
 
         self.point_list.append({
             'x': x,
@@ -75,6 +77,7 @@ class File3D:
 
                 payload = {
                     'dzuuid': uid_upload,
+                    'original_filename': self.original_filename,
                     'dzchunkindex': i,
                     'dztotalfilesize': file_size,
                     'dzchunksize': chunk_size,
@@ -91,7 +94,7 @@ class File3D:
                 # Read file Chunk
                 s.seek(payload['dzchunkbyteoffset'])
                 file_chunk = s.read(payload['dzchunksize'])
-                files = {'file': ('{}_sensor_fusion_file.json'.format(uid_upload), file_chunk)}
+                files = {'file': ('{}_sf.json'.format(self.original_filename), file_chunk)}
                 # Make request to server
                 url = self.client.host + endpoint
                 response = self.client.session.post(url,
