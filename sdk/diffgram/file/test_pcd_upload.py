@@ -10,10 +10,10 @@ def read_pcd_o3d(file_name):
     return out_arr
 
 
-project = Project(project_string_id = "glorybiter",
-                  debug = True,
-                  client_id = "LIVE__6bn2dsiitc4vbmnwlihz",
-                  client_secret = "kzwlrg20pdvjzfutz2oitx2aakqvf0216j201pv47i53nw8v52x1unqtjt3h")
+project = Project(project_string_id = "forestfox",
+                  client_id = "LIVE__hyibdfom3kqia8ks6jcp",
+                  client_secret = "zx0gzw4yznimtfg4x4gdyqoc0sq6t6d73uc6dvkys7f07k9mvt9mzffm101m",
+                  debug = True)
 
 
 def upload_test_file1():
@@ -48,7 +48,7 @@ def upload_test_file1():
 
 # File 2 test
 def upload_test_file2():
-    points_arr = read_pcd_o3d('/home/pablo/Downloads/model.pcd')
+    points_arr = read_pcd_o3d('/home/pablo/Downloads/Zaghetto.pcd')
 
     diffgram_3d_file = File3D(client = project, name = 'face.pcd')
 
