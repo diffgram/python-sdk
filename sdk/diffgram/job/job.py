@@ -51,7 +51,7 @@ class Job():
     def __repr__(self):
         return str(self.serialize())
 
-    def __add_directory_to_job(self, directory, mode='sync'):
+    def __add_directory_to_job(self, directory: Directory, mode='sync'):
         """
 
         :param directories: Array of directories Objects
@@ -60,7 +60,7 @@ class Job():
         """
         self.attached_directories.append(
             {
-                'directory_id': directory['id'],
+                'directory_id': directory.id,
                 'selected': mode,
 
             }
@@ -156,6 +156,7 @@ class Job():
             sync_directories=[],
             single_copy_directories=[],
             members_list_ids = [],
+            auto_launch=True,
             ):
         """
 
@@ -230,6 +231,17 @@ class Job():
 
         if guide:
             job.guide_update(guide=guide)
+
+        if auto_launch:
+            endpoint_launch = "/api/v1/job/launch".format(self.client.project_string_id)
+            response = self.client.session.post(
+                self.client.host + endpoint_launch,
+                json = {
+                    'job_id': data['job']['id']
+                })
+            self.client.handle_errors(response)
+
+
 
         return job
 
