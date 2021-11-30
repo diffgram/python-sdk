@@ -48,6 +48,10 @@ class File3D:
         :param chunk_size: Size of each chunk of the JSON file. Default is 5MB
         :return:
         """
+
+        if len(self.point_list) == 0:
+            print('At least 1 point should be provided in the point list. Please add point using add_point()')
+            return False
         file_data = {
             'point_list': self.point_list
         }
