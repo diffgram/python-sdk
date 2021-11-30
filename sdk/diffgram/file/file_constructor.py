@@ -301,6 +301,8 @@ class FileConstructor():
             raise Exception("frame_packet_map is not a dict")
 
         for frame, instance_list in frame_packet_map.items():
+            if instance_list is None:
+                raise Exception("instance_list cannot be None")
 
             if type(frame) != int:
                 raise Exception("frame is not a integer. The key should be the integer frame number.")
@@ -312,7 +314,8 @@ class FileConstructor():
             frame_packet_map[frame] = self.__validate_and_format_instance_list(
                 instance_list = instance_list,
                 assume_new_instances_machine_made = assume_new_instances_machine_made,
-                convert_names_to_label_files = convert_names_to_label_files
+                convert_names_to_label_files = convert_names_to_label_files,
+                check_frame_number = True
             )
 
         return frame_packet_map
@@ -321,7 +324,8 @@ class FileConstructor():
             self,
             instance_list: list,
             assume_new_instances_machine_made: bool,
-            convert_names_to_label_files: bool):
+            convert_names_to_label_files: bool,
+            check_frame_number: bool = False ):
 
         FileConstructor.sanity_check_instance_list(instance_list)
 
@@ -333,6 +337,11 @@ class FileConstructor():
             instance_list = self.instance_list_label_strings_to_ids(
                 instance_list = instance_list
             )
+
+        if check_frame_number:
+            for elm in instance_list:
+                if elm.get('frame_number') is None:
+                    raise Exception('All instances must have a "frame_number" key.')
 
         return instance_list
 
@@ -367,6 +376,10 @@ class FileConstructor():
 
         if len(instance_list) == 0:
             raise Warning("'instance_list' is empty")
+
+        for elm in instance_list:
+            if elm is None:
+                raise Exception("instance_list elements cannot be None")
 
         FileConstructor.__check_for_duplicates_on_instance_list(instance_list)
 
