@@ -12,6 +12,7 @@ class File3D:
     client: Project
 
     def __init__(self, client, name, point_list = []):
+        self.point_list = []
         self.client = client
         self.original_filename = name
         self.point_list = point_list
@@ -57,6 +58,8 @@ class File3D:
         }
         json_data = json.dumps(file_data)
 
+        with open('data.json', 'w') as outfile:
+            json.dump(json_data, outfile)
         endpoint = "/api/walrus/project/{}/upload/large".format(
             self.client.project_string_id
         )
@@ -77,7 +80,6 @@ class File3D:
 
             uid_upload = str(uuid.uuid4())
             for i in range(0, num_chunks):
-                # print('File Size: {} bytes.'.format(file_size))
 
                 payload = {
                     'dzuuid': uid_upload,
