@@ -121,6 +121,7 @@ class Job():
             'id': self.id,
             'name': self.name,
             'status': self.status,
+            'label_schema_id': self.label_schema_id,
             'instance_type': self.instance_type,
             'share': self.share,
             'type': self.type,
@@ -142,6 +143,7 @@ class Job():
             instance_type=None,
             share="project",
             job_type="Normal",
+            label_schema_id = None,
             permission=None,
             field=None,
             category=None,
@@ -188,6 +190,7 @@ class Job():
         job.passes_per_file = passes_per_file
         job.launch_datetime = launch_datetime
         job.label_file_list = label_file_list
+        job.label_schema_id = label_schema_id
         job.attached_directories = []
         job.member_list_ids = members_list_ids
 
