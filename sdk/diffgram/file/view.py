@@ -42,7 +42,7 @@ def get_label_file_dict(self, schema_id = None, use_session = True):
 
     endpoint = "/api/v1/project/" + self.project_string_id + \
                "/labels/view/name_to_file_id"
-    params = {'schema_id': schema_id}
+    params = {'schema_id': schema_id, 'directory_id': self.directory_id}
     if use_session:
         response = self.session.get(self.host + endpoint, params = params)
     else:
