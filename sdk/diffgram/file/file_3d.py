@@ -64,7 +64,7 @@ class File3D:
             self.client.project_string_id
         )
         chunk_size = 5000000  # 5 MB chunks
-        dataset_id = self.client.default_directory['id']
+        dataset_id = self.client.default_directory.id
         if dataset_name is not None:
             dataset_id = self.client.directory.get(dataset_name).id
 
