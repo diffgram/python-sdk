@@ -28,7 +28,7 @@ class Project():
             debug = False,
             staging = False,
             host = None,
-            set_default_directory = True,
+            init_default_directory = True,
             refresh_local_label_dict = True
 
     ):
@@ -71,7 +71,7 @@ class Project():
         self.name_to_file_id = None
 
 
-        if set_default_directory is True:
+        if init_default_directory is True:
             self.set_default_directory()
             print("Default directory set:", self.directory_id)
 
@@ -83,7 +83,7 @@ class Project():
 
         self.label_schema_list = self.get_label_schema_list()
 
-        self.directory_list = []
+        self.directory_list = None
 
 
     def get_member_list(self):
@@ -302,14 +302,14 @@ class Project():
         -> Sets the headers of self.session
 
         """
-
         if directory_id:
             self.directory_id = directory_id
         if directory:
             self.directory_id = directory.id
             self.default_directory = directory
-              
-        self.directory_list = self.directory.get_directory_list()
+            
+        if not self.directory_list:
+            self.directory_list = self.directory.get_directory_list()
 
         self.session.headers.update(
             {'directory_id': str(self.directory_id)})

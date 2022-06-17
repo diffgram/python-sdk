@@ -18,13 +18,17 @@ class Directory(DiffgramDatasetIterator):
         self.file_list_metadata = {}
         self.nickname = None
         if file_id_list_sliced is None and init_file_ids:
-            self.file_id_list = self.all_file_ids()
+            self.init_files()
         elif not init_file_ids:
             self.file_id_list = []
         elif file_id_list_sliced is not None:
             self.file_id_list = file_id_list_sliced
         super(Directory, self).__init__(self.client, self.file_id_list, validate_ids)
 
+
+
+    def init_files(self):
+        self.file_id_list = self.all_file_ids()
 
     def get_directory_list(self):
         """
@@ -68,16 +72,15 @@ class Directory(DiffgramDatasetIterator):
                 init_file_ids = False,
                 validate_ids = False
                 )
-            refresh_from_dict(new_directory, directory_json) 
+            refresh_from_dict(new_directory, directory_json)
+
+            # note timing issue, this needs to happen after id is refreshed
+            new_directory.init_files()  
+
             directory_list.append(new_directory)
 
         return directory_list
 
-
-    def set_default():
-
-        if not self.client.directory_list:
-            self.client.directory_list = self.get_directory_list()
 
 
     def all_files(self):
@@ -89,7 +92,10 @@ class Directory(DiffgramDatasetIterator):
         page_num = 1
         result = []
         while page_num is not None:
-            diffgram_files = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'base')
+            diffgram_files = self.list_files(
+                limit = 1000, 
+                page_num = page_num, 
+                file_view_mode = 'base')
             page_num = self.file_list_metadata['next_page']
             result = result + diffgram_files
         return result
@@ -98,7 +104,12 @@ class Directory(DiffgramDatasetIterator):
         page_num = 1
         result = []
 
-        diffgram_ids = self.list_files(limit = 5000, page_num = page_num, file_view_mode = 'ids_only', query = query)
+        diffgram_ids = self.list_files(
+            limit = 5000, 
+            page_num = page_num, 
+            file_view_mode = 'ids_only', 
+            query = query)
+
         if diffgram_ids is False:
             raise Exception('Error Fetching Files: Please check you are providing a valid query.')
         result = result + diffgram_ids
@@ -223,22 +234,6 @@ class Directory(DiffgramDatasetIterator):
             file_view_mode: str = 'annotation',
             query: str = None):
         """
-        Get a list of files in directory (from Diffgram service).
-
-        Assumes we are using the default directory.
-        this can be changed ie by: 	project.set_directory_by_name(dir_name)
-
-        We don't have a strong Directory concept in the SDK yet
-        So for now assume that we need to
-        call 	project.set_directory_by_name(dir_name)   first
-        if we want to change the directory
-
-
-        WIP Feb 3, 2020
-            A lot of "hard coded" options here.
-            Want to think a bit more about what we want to
-            expose options here and what good contexts are.
-
         """
         if self.id:
             logging.info("Using Dataset ID " + str(self.id))
