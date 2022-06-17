@@ -4,7 +4,11 @@ from diffgram.brain.inference import Inference
 import tempfile
 
 # TODO import these only if local prediction is needed
-import cv2
+
+try:
+	import cv2
+except:
+	print("Could not import cv2")
 
 try:
 	import tensorflow as tf
