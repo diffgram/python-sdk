@@ -1,8 +1,11 @@
 import setuptools
 import diffgram.__init__ as init
 
-with open(".././README.md", "r") as fh:
-    long_description = fh.read()
+try:
+    with open(".././README.md", "r") as fh:
+        long_description = fh.read()
+except:
+    long_description = "None"
 
 setuptools.setup(
     name = init.__name__,
@@ -22,7 +25,6 @@ setuptools.setup(
     ],
 	install_requires=[
 	   'requests>=2.20.1',
-	   'opencv-python>=4.0.0.21',
 	   'scipy>=1.1.0',
 	   'six>=1.9.0',
 	   'pillow>=6.1.0',

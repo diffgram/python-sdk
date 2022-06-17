@@ -3,8 +3,6 @@ import requests
 from diffgram import __version__
 
 from diffgram.file.view import get_label_file_dict
-from diffgram.core.directory import get_directory_list
-from diffgram.core.directory import set_directory_by_name
 from diffgram.convert.convert import convert_label
 from diffgram.label.label_new import label_new
 
@@ -29,7 +27,10 @@ class Project():
             client_secret = None,
             debug = False,
             staging = False,
-            host = None
+            host = None,
+            init_default_directory = True,
+            refresh_local_label_dict = True
+
     ):
 
         self.session = requests.Session()
@@ -50,23 +51,40 @@ class Project():
                 self.host = "https://diffgram.com"
         else:
             self.host = host
-        self.directory_id = None
-        self.name_to_file_id = None
+
         self.auth(
             project_string_id = project_string_id,
             client_id = client_id,
             client_secret = client_secret)
+
+        self.file = FileConstructor(self)
+        #self.train = Train(self)
+        self.job = Job(self)
+        self.guide = Guide(self)
+        self.directory = Directory(self, 
+                                   init_file_ids = False,
+                                   validate_ids = False)
+        self.export = Export(self)
+        self.task = Task(client = self)
+
+        self.directory_id = None
+        self.name_to_file_id = None
+
+
+        if init_default_directory is True:
+            self.set_default_directory(directory = self.directory)
+            print("Default directory set:", self.directory_id)
+
+        if refresh_local_label_dict is True:
+            self.get_label_file_dict()
+
         self.client_id = client_id
         self.client_secret = client_secret
 
-        self.file = FileConstructor(self)
-        self.train = Train(self)
-        self.job = Job(self)
-        self.guide = Guide(self)
-        self.directory = Directory(self, validate_ids = False)
-        self.export = Export(self)
-        self.task = Task(client = self)
         self.label_schema_list = self.get_label_schema_list()
+
+        self.directory_list = None
+
 
     def get_member_list(self):
         url = '/api/project/{}/view'.format(self.project_string_id)
@@ -216,9 +234,7 @@ class Project():
     def auth(self,
              project_string_id,
              client_id = None,
-             client_secret = None,
-             set_default_directory = True,
-             refresh_local_label_dict = True
+             client_secret = None
              ):
         """
         Define authorization configuration
@@ -242,47 +258,59 @@ class Project():
         if client_id and client_secret:
             self.session.auth = (client_id, client_secret)
 
-        if set_default_directory is True:
-            self.set_default_directory()
 
-        if refresh_local_label_dict is True:
-            # Refresh local labels from Diffgram project
-            self.get_label_file_dict()
+    def set_directory_by_name(self, name):
+        """
+
+        Arguments
+            self
+            name, string
+
+        """
+
+        if name is None:
+            raise Exception("No name provided.")
+
+        # Don't refresh by default, just set from existing
+
+        names_attempted = []
+        did_set = False
+
+        if not self.directory_list:
+            self.directory_list = self.directory.get_directory_list()
+
+        for directory in self.directory_list:
+
+            if directory.nickname == name:
+                self.set_default_directory(directory = directory)
+                did_set = True
+                break
+            else:
+                names_attempted.append(directory.nickname)
+
+        if did_set is False:
+            raise Exception(name, " does not exist. Valid names are: " +
+                            str(names_attempted))
+
 
     def set_default_directory(self,
-                              directory_id = None):
+                              directory_id = None,
+                              directory = None):
         """
         -> If no id is provided fetch directory list for project
         and set first directory to default.
         -> Sets the headers of self.session
 
-        Arguments
-            directory_id, int, defaults to None
-
-        Returns
-            None
-
-        Future
-            TODO return error if invalid directory?
-
         """
-
         if directory_id:
-            # TODO check if valid?
-            # data = {}
-            # data["directory_id"] = directory_id
             self.directory_id = directory_id
-        else:
+        if directory:
+            self.directory_id = directory.id
+            self.default_directory = directory
+            
+        if not hasattr(self, 'directory_list'):
+            self.directory_list = self.directory.get_directory_list()
 
-            data = self.get_directory_list()
-
-            self.default_directory = data['default_directory']
-
-            # Hold over till refactoring (would prefer to
-            # just call self.directory_default.id
-            self.directory_id = self.default_directory['id']
-
-            self.directory_list = data["directory_list"]
         self.session.headers.update(
             {'directory_id': str(self.directory_id)})
 
@@ -290,7 +318,5 @@ class Project():
 # TODO review not using this pattern anymore
 
 setattr(Project, "get_label_file_dict", get_label_file_dict)
-setattr(Project, "get_directory_list", get_directory_list)
 setattr(Project, "convert_label", convert_label)
 setattr(Project, "label_new", label_new)
-setattr(Project, "set_directory_by_name", set_directory_by_name)

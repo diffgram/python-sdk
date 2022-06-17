@@ -4,86 +4,84 @@ import logging
 from diffgram.core.diffgram_dataset_iterator import DiffgramDatasetIterator
 from multiprocessing.pool import ThreadPool as Pool
 
-def get_directory_list(self):
-    """
-    Get a list of available directories for a project
-
-    Arguments
-        self
-
-    Expects
-        self.project_string_id
-
-    Returns
-        directory_list, array of dicts
-
-    """
-
-    if self.project_string_id is None:
-        raise Exception("No project string." + \
-                        "Set a project string using .auth()")
-
-    if type(self.project_string_id) != str:
-        raise Exception("project_string_id must be of type String")
-
-    endpoint = "/api/v1/project/" + self.project_string_id + \
-               "/directory/list"
-
-    response = self.session.get(self.host + endpoint)
-
-    self.handle_errors(response)
-
-    directory_list = response.json()
-
-    return directory_list
-
-
-def set_directory_by_name(self, name):
-    """
-
-    Arguments
-        self
-        name, string
-
-    """
-
-    if name is None:
-        raise Exception("No name provided.")
-
-    # Don't refresh by default, just set from existing
-
-    names_attempted = []
-    did_set = False
-
-    for directory in self.directory_list:
-
-        nickname = directory.get("nickname")
-        if nickname == name:
-            self.set_default_directory(directory.get("id"))
-            did_set = True
-            break
-        else:
-            names_attempted.append(nickname)
-
-    if did_set is False:
-        raise Exception(name, " does not exist. Valid names are: " +
-                        str(names_attempted))
-
 
 class Directory(DiffgramDatasetIterator):
 
-    def __init__(self, client, file_id_list_sliced = None, init_file_ids = True, validate_ids = True):
+    def __init__(self, 
+                 client, 
+                 file_id_list_sliced = None, 
+                 init_file_ids = True, 
+                 validate_ids = True):
 
         self.client = client
         self.id = None
         self.file_list_metadata = {}
+        self.nickname = None
         if file_id_list_sliced is None and init_file_ids:
-            self.file_id_list = self.all_file_ids()
+            self.init_files()
         elif not init_file_ids:
             self.file_id_list = []
         elif file_id_list_sliced is not None:
             self.file_id_list = file_id_list_sliced
         super(Directory, self).__init__(self.client, self.file_id_list, validate_ids)
+
+
+
+    def init_files(self):
+        self.file_id_list = self.all_file_ids()
+
+    def get_directory_list(self):
+        """
+        Get a list of available directories for a project
+        """
+
+        if self.client.project_string_id is None:
+            raise Exception("No project string." + \
+                            "Set a project string using .auth()")
+
+        if type(self.client.project_string_id) != str:
+            raise Exception("project_string_id must be of type String")
+
+        endpoint = "/api/v1/project/" + self.client.project_string_id + \
+                   "/directory/list"
+
+        response = self.client.session.get(self.client.host + endpoint)
+
+        self.client.handle_errors(response)
+
+        data = response.json()
+        
+        directory_list_json = data.get('directory_list')
+        default_directory_json = data.get('default_directory')
+
+        if default_directory_json:
+            self.client.directory_id = default_directory_json.get('id')
+
+        directory_list = self.convert_json_to_sdk_object(directory_list_json)
+
+        return directory_list
+        
+
+    def convert_json_to_sdk_object(self, directory_list_json):
+
+        directory_list = []
+
+        for directory_json in directory_list_json:
+            new_directory = Directory(
+                client = self.client,
+                init_file_ids = False,
+                validate_ids = False
+                )
+            refresh_from_dict(new_directory, directory_json)
+
+            # note timing issue, this needs to happen after id is refreshed
+            new_directory.init_files()  
+
+            directory_list.append(new_directory)
+
+        return directory_list
+
+
 
     def all_files(self):
         """
@@ -94,7 +92,10 @@ class Directory(DiffgramDatasetIterator):
         page_num = 1
         result = []
         while page_num is not None:
-            diffgram_files = self.list_files(limit = 1000, page_num = page_num, file_view_mode = 'base')
+            diffgram_files = self.list_files(
+                limit = 1000, 
+                page_num = page_num, 
+                file_view_mode = 'base')
             page_num = self.file_list_metadata['next_page']
             result = result + diffgram_files
         return result
@@ -103,7 +104,12 @@ class Directory(DiffgramDatasetIterator):
         page_num = 1
         result = []
 
-        diffgram_ids = self.list_files(limit = 5000, page_num = page_num, file_view_mode = 'ids_only', query = query)
+        diffgram_ids = self.list_files(
+            limit = 5000, 
+            page_num = page_num, 
+            file_view_mode = 'ids_only', 
+            query = query)
+
         if diffgram_ids is False:
             raise Exception('Error Fetching Files: Please check you are providing a valid query.')
         result = result + diffgram_ids
@@ -190,7 +196,7 @@ class Directory(DiffgramDatasetIterator):
         # generator expression returns True if the directory
         # is not found. this is a bit awkward.
         if next((dir for dir in self.client.directory_list
-                 if dir['nickname'] == name), True) is not True:
+                 if dir.nickname == name), True) is not True:
             raise Exception(name, "Already exists")
 
         packet = {'nickname': name}
@@ -208,18 +214,15 @@ class Directory(DiffgramDatasetIterator):
 
         project = data.get('project')
         if project:
-            directory_list = project.get('directory_list')
-            # TODO upgrade directory_list here to be 1st class objects instead of JSON
-            if directory_list:
-                self.client.directory_list = directory_list
+            directory_list_json = project.get('directory_list')
+            if directory_list_json:
+                self.client.directory_list = self.convert_json_to_sdk_object(directory_list_json)
 
         new_directory = None
         # TODO the route about should return the newly created dataset directly
-        for directory_json in self.client.directory_list:
-            nickname = directory_json.get("nickname")
-            if nickname == name:
-                new_directory = Directory(client = self.client)
-                refresh_from_dict(new_directory, directory_json)
+        for directory in self.client.directory_list:
+            if directory.nickname == name:
+                new_directory = directory
 
         return new_directory
 
@@ -231,22 +234,6 @@ class Directory(DiffgramDatasetIterator):
             file_view_mode: str = 'annotation',
             query: str = None):
         """
-        Get a list of files in directory (from Diffgram service).
-
-        Assumes we are using the default directory.
-        this can be changed ie by: 	project.set_directory_by_name(dir_name)
-
-        We don't have a strong Directory concept in the SDK yet
-        So for now assume that we need to
-        call 	project.set_directory_by_name(dir_name)   first
-        if we want to change the directory
-
-
-        WIP Feb 3, 2020
-            A lot of "hard coded" options here.
-            Want to think a bit more about what we want to
-            expose options here and what good contexts are.
-
         """
         if self.id:
             logging.info("Using Dataset ID " + str(self.id))
@@ -319,20 +306,16 @@ class Directory(DiffgramDatasetIterator):
         names_attempted = []
         did_set = False
 
-        for directory_json in self.client.directory_list:
+        if not self.client.directory_list:
+            self.client.directory_list = self.get_directory_list()
 
-            nickname = directory_json.get("nickname")
-            if nickname == name:
-                # TODO change the general directory_list
-                # to use object approach (over dict)
+        for directory in self.client.directory_list:
 
-                new_directory = Directory(client = self.client)
-                refresh_from_dict(new_directory, directory_json)
-
-                return new_directory
+            if directory.nickname == name:
+                return directory
 
             else:
-                names_attempted.append(nickname)
+                names_attempted.append(directory.nickname)
 
         if did_set is False:
             raise Exception(name, " does not exist. Valid names are: " +
