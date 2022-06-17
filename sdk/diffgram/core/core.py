@@ -72,7 +72,7 @@ class Project():
 
 
         if init_default_directory is True:
-            self.set_default_directory()
+            self.set_default_directory(directory = self.directory)
             print("Default directory set:", self.directory_id)
 
         if refresh_local_label_dict is True:
@@ -308,7 +308,7 @@ class Project():
             self.directory_id = directory.id
             self.default_directory = directory
             
-        if not self.directory_list:
+        if not hasattr(self, 'directory_list'):
             self.directory_list = self.directory.get_directory_list()
 
         self.session.headers.update(

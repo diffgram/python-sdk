@@ -49,7 +49,6 @@ def get_label_file_dict(self, schema_id = None, use_session = True):
         # Add Auth
         response = requests.get(self.host + endpoint,
                                 params = params,
-                                headers = {'schema_id': str(schema_id)},
                                 auth = self.get_http_auth())
 
     self.handle_errors(response)
