@@ -8,8 +8,16 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class DiffgramDatasetIterator:
+    diffgram_file_id_list: list
+    max_size_cache: int = 1073741824
+    pool: ThreadPoolExecutor
+    project: 'Project'
+    file_cache: dict
+    _internal_file_list: list
+    current_file_index: int
 
-    def __init__(self, project,
+    def __init__(self,
+                 project,
                  diffgram_file_id_list,
                  validate_ids = True,
                  max_size_cache = 1073741824,
@@ -19,6 +27,21 @@ class DiffgramDatasetIterator:
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
         :param diffgram_file_list (list): An arbitrary number of file ID's from Diffgram.
         """
+        self.diffgram_file_id_list = []
+        self.max_size_cache = 1073741824
+        self.pool = None
+        self.file_cache = {}
+        self._internal_file_list = []
+        self.current_file_index = 0
+        self.start_iterator(
+            project = project,
+            diffgram_file_id_list = diffgram_file_id_list,
+            validate_ids = validate_ids,
+            max_size_cache = max_size_cache,
+            max_num_concurrent_fetches = max_num_concurrent_fetches)
+
+    def start_iterator(self, project, diffgram_file_id_list, validate_ids = True, max_size_cache = 1073741824,
+                       max_num_concurrent_fetches = 25):
         self.diffgram_file_id_list = diffgram_file_id_list
         self.max_size_cache = max_size_cache
         self.pool = ThreadPoolExecutor(max_num_concurrent_fetches)
@@ -62,7 +85,8 @@ class DiffgramDatasetIterator:
         return True
 
     def __get_file_data_for_index(self, idx):
-        diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True, use_session = False)
+        diffgram_file = self.project.file.get_by_id(self.diffgram_file_id_list[idx], with_instances = True,
+                                                    use_session = False)
         instance_data = self.get_file_instances(diffgram_file)
         self.save_file_in_cache(idx, instance_data)
         return instance_data
@@ -88,7 +112,7 @@ class DiffgramDatasetIterator:
         if not self.diffgram_file_id_list:
             return
         result = self.project.file.file_list_exists(
-            self.diffgram_file_id_list, 
+            self.diffgram_file_id_list,
             use_session = False)
         if not result:
             raise Exception(

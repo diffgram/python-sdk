@@ -70,6 +70,8 @@ class Project():
         self.directory_id = None
         self.name_to_file_id = None
 
+        self.client_id = client_id
+        self.client_secret = client_secret
 
         if init_default_directory is True:
             self.set_default_directory(directory = self.directory)
@@ -77,9 +79,6 @@ class Project():
 
         if refresh_local_label_dict is True:
             self.get_label_file_dict()
-
-        self.client_id = client_id
-        self.client_secret = client_secret
 
         self.label_schema_list = self.get_label_schema_list()
 

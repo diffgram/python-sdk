@@ -7,10 +7,10 @@ from multiprocessing.pool import ThreadPool as Pool
 
 class Directory(DiffgramDatasetIterator):
 
-    def __init__(self, 
-                 client, 
-                 file_id_list_sliced = None, 
-                 init_file_ids = True, 
+    def __init__(self,
+                 client,
+                 file_id_list_sliced = None,
+                 init_file_ids = True,
                  validate_ids = True):
 
         self.client = client
@@ -25,11 +25,8 @@ class Directory(DiffgramDatasetIterator):
             self.file_id_list = file_id_list_sliced
         super(Directory, self).__init__(self.client, self.file_id_list, validate_ids)
 
-
-
     def init_files(self):
         self.file_id_list = self.all_file_ids()
-
     def get_directory_list(self):
         """
         Get a list of available directories for a project
@@ -50,7 +47,7 @@ class Directory(DiffgramDatasetIterator):
         self.client.handle_errors(response)
 
         data = response.json()
-        
+
         directory_list_json = data.get('directory_list')
         default_directory_json = data.get('default_directory')
 
@@ -60,7 +57,6 @@ class Directory(DiffgramDatasetIterator):
         directory_list = self.convert_json_to_sdk_object(directory_list_json)
 
         return directory_list
-        
 
     def convert_json_to_sdk_object(self, directory_list_json):
 
@@ -71,17 +67,20 @@ class Directory(DiffgramDatasetIterator):
                 client = self.client,
                 init_file_ids = False,
                 validate_ids = False
-                )
+            )
             refresh_from_dict(new_directory, directory_json)
 
             # note timing issue, this needs to happen after id is refreshed
-            new_directory.init_files()  
+            new_directory.init_files()
+            new_directory.start_iterator(
+                project = new_directory.project,
+                diffgram_file_id_list = new_directory.file_id_list,
+                validate_ids = True
+            )
 
             directory_list.append(new_directory)
 
         return directory_list
-
-
 
     def all_files(self):
         """
@@ -93,8 +92,8 @@ class Directory(DiffgramDatasetIterator):
         result = []
         while page_num is not None:
             diffgram_files = self.list_files(
-                limit = 1000, 
-                page_num = page_num, 
+                limit = 1000,
+                page_num = page_num,
                 file_view_mode = 'base')
             page_num = self.file_list_metadata['next_page']
             result = result + diffgram_files
@@ -105,9 +104,9 @@ class Directory(DiffgramDatasetIterator):
         result = []
 
         diffgram_ids = self.list_files(
-            limit = 5000, 
-            page_num = page_num, 
-            file_view_mode = 'ids_only', 
+            limit = 5000,
+            page_num = page_num,
+            file_view_mode = 'ids_only',
             query = query)
 
         if diffgram_ids is False:
@@ -299,7 +298,6 @@ class Directory(DiffgramDatasetIterator):
          TODO refactor set_directory_by_name() to use this
 
         """
-
         if name is None:
             raise Exception("No name provided.")
 
@@ -312,6 +310,7 @@ class Directory(DiffgramDatasetIterator):
         for directory in self.client.directory_list:
 
             if directory.nickname == name:
+                directory.init_files()
                 return directory
 
             else:
