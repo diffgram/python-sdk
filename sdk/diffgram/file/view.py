@@ -42,14 +42,14 @@ def get_label_file_dict(self, schema_id = None, use_session = True):
 
     endpoint = "/api/v1/project/" + self.project_string_id + \
                "/labels/view/name_to_file_id"
-    params = {'schema_id': schema_id, 'directory_id': self.directory_id}
+    params = {'schema_id': schema_id}
     if use_session:
         response = self.session.get(self.host + endpoint, params = params)
     else:
         # Add Auth
         response = requests.get(self.host + endpoint,
                                 params = params,
-                                headers = {'directory_id': str(self.directory_id)},
+                                headers = {'schema_id': str(schema_id)},
                                 auth = self.get_http_auth())
 
     self.handle_errors(response)
@@ -57,5 +57,6 @@ def get_label_file_dict(self, schema_id = None, use_session = True):
     data = response.json()
     if data["log"]["success"] == True:
         self.name_to_file_id = data["name_to_file_id"]
+        print("Loaded schema")
     else:
         raise Exception(data["log"]["errors"])
