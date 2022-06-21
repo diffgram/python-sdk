@@ -136,6 +136,30 @@ class DiffgramDatasetIterator:
         else:
             raise Exception('Pytorch datasets only support images. Please provide only file_ids from images')
 
+    def gen_global_attrs(self, instance_list):
+        res = []
+        for inst in instance_list:
+            if inst['type'] != 'global':
+                continue
+            res.append(inst['attribute_groups'])
+        return res
+
+    def gen_tag_instances(self, instance_list):
+        result = []
+        for inst in instance_list:
+            if inst['type'] != 'tag':
+                continue
+            for k in list(inst.keys()):
+                val = inst[k]
+                if val is None:
+                    inst.pop(k)
+            elm = {
+                'label': inst['label_file']['label']['name'],
+                'label_file_id': inst['label_file']['id'],
+            }
+            result.append(elm)
+        return result
+
     def get_file_instances(self, diffgram_file):
         if diffgram_file.type not in ['image', 'frame']:
             raise NotImplementedError('File type "{}" is not supported yet'.format(diffgram_file['type']))
@@ -147,6 +171,9 @@ class DiffgramDatasetIterator:
         sample = {'image': image, 'diffgram_file': diffgram_file}
         has_boxes = False
         has_poly = False
+        has_tags = False
+        has_global = False
+        sample['raw_instance_list'] = instance_list
         if 'box' in instance_types_in_file:
             has_boxes = True
             x_min_list, x_max_list, y_min_list, y_max_list = self.extract_bbox_values(instance_list, diffgram_file)
@@ -164,12 +191,19 @@ class DiffgramDatasetIterator:
             has_poly = True
             mask_list = self.extract_masks_from_polygon(instance_list, diffgram_file)
             sample['polygon_mask_list'] = mask_list
+        if 'tag' in instance_types_in_file:
+            has_tags = True
+            sample['tags'] = self.gen_tag_instances(instance_list)
+        if 'global' in instance_types_in_file:
+            has_global = True
+            sample['global_attributes'] = self.gen_global_attrs(instance_list)
+
         else:
             sample['polygon_mask_list'] = []
 
-        if len(instance_types_in_file) > 2 and has_boxes and has_boxes:
+        if len(instance_types_in_file) > 4 and has_poly and has_boxes and has_tags and has_global:
             raise NotImplementedError(
-                'SDK only supports boxes and polygon types currently. If you want a new instance type to be supported please contact us!'
+                'SDK Streaming only supports boxes and polygon, tags and global attributes types currently. If you want a new instance type to be supported please contact us!'
             )
 
         label_id_list, label_name_list = self.extract_labels(instance_list)
@@ -198,11 +232,13 @@ class DiffgramDatasetIterator:
     def extract_labels(self, instance_list, allowed_instance_types = None):
         label_file_id_list = []
         label_names_list = []
-
         for inst in instance_list:
+            if inst['type'] == 'global':
+                continue
+            if inst is None:
+                continue
             if allowed_instance_types and inst['type'] in allowed_instance_types:
                 continue
-
             label_file_id_list.append(inst['label_file']['id'])
             label_names_list.append(inst['label_file']['label']['name'])
 
