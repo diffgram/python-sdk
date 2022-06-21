@@ -132,6 +132,21 @@ class Project():
         data = response.json()
         return data
 
+    def get_attributes(self, schema_id = None):
+        if schema_id is None:
+            schema = self.get_default_label_schema()
+            if schema is not None:
+                schema_id = schema.get('id')
+        url = f'/api/v1/project/{self.project_string_id}/attribute/template/list'
+        data = {
+            'schema_id': schema_id,
+            'mode': "from_project",
+        }
+        response = self.session.post(url = self.host + url, json=data)
+        self.handle_errors(response)
+        data = response.json()
+        return data.get('attribute_group_list')
+
     def get_http_auth(self):
         return HTTPBasicAuth(self.client_id, self.client_secret)
 
