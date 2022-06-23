@@ -318,16 +318,14 @@ class Project():
         """
         if directory_id:
             self.directory_id = directory_id
-        if directory:
+        if directory is not None:
             self.directory_id = directory.id
             self.default_directory = directory
-            
         if not hasattr(self, 'directory_list'):
             self.directory_list = self.directory.get_directory_list()
 
         self.session.headers.update(
             {'directory_id': str(self.directory_id)})
-
 
 # TODO review not using this pattern anymore
 
