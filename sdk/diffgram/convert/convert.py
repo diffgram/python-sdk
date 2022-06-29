@@ -11,9 +11,11 @@ def convert_label(self, instance):
 
 	name = instance.get('name')
 
+	if instance.get('type') == 'global':
+		return instance
+
 	if not name:
 		raise Exception("Key Error: Instance must have a key 'name'.")
-
 	instance["label_file_id"] = self.client.name_to_file_id.get(name, None)
 
 	if not instance["label_file_id"]:
