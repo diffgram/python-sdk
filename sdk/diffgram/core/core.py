@@ -19,6 +19,7 @@ from requests.auth import HTTPBasicAuth
 
 
 class Project():
+    default_directory: Directory
 
     def __init__(
             self,
