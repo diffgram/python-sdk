@@ -388,6 +388,9 @@ class Job():
             self,
             kind='Annotations',
             return_type="data",
+            source="job",
+            masks=False,
+            directory_id=None,
             wait_for_export_generation=True,
             ann_is_complete=None    # Bool. None=='all', True=='complete' tasks only
     ):
@@ -417,10 +420,10 @@ class Job():
         spec_dict = {
             'job_id': self.id,
             'kind': kind,
-            'source': "job",
+            'source': source,
             'file_comparison_mode': "latest",
-            'directory_id': None,
-            'masks': False,
+            'directory_id': directory_id,
+            'masks': masks,
             'ann_is_complete': ann_is_complete,
             'return_type': return_type,
             'wait_for_export_generation': wait_for_export_generation
