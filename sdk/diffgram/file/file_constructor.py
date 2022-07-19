@@ -119,7 +119,7 @@ class FileConstructor():
         packet['directory_id'] = directory_id
         packet['original_filename'] = file_name
         packet['bucket_name'] = bucket_name
-        packet['blob_path'] = blob_path
+        packet['raw_data_blob_path'] = blob_path
         packet['instance_list'] = instance_list
 
         if job:
