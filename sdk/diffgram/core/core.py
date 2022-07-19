@@ -335,6 +335,23 @@ class Project():
         self.session.headers.update(
             {'directory_id': str(self.directory_id)})
 
+
+
+    def new_schema(self,
+                   name: str):
+
+            endpoint = "/api/v1/project/" + self.project_string_id + \
+                       "/labels-schema/new"
+
+            request_json_body = {'name': name}
+
+            response = self.session.post(self.host + endpoint,
+                                         json = request_json_body)
+
+            self.handle_errors(response)
+            return response.json()
+
+
 # TODO review not using this pattern anymore
 
 setattr(Project, "get_label_file_dict", get_label_file_dict)
