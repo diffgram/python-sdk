@@ -113,6 +113,13 @@ class Project():
 
         return self.label_schema_list[0]
 
+    def get_connection_list(self):
+        url = f'/api/project/{self.project_string_id}/connections'
+        response = self.session.get(url = self.host + url)
+        self.handle_errors(response)
+        data = response.json()
+        return data.get('connection_list')
+
     def get_label_list(self, schema_id = None):
         url = f'/api/project/{self.project_string_id}/labels'
         if schema_id is None:

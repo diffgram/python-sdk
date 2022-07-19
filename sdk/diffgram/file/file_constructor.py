@@ -88,8 +88,6 @@ class FileConstructor():
 
         data = response.json()
 
-        # print(data)
-
         if data["log"]["success"] is True:
             file = self.file_from_response(file_dict = data['file'])
             return file
@@ -336,7 +334,6 @@ class FileConstructor():
         endpoint = "/api/walrus/v1/project/" + \
                    self.client.project_string_id + "/input/packet"
 
-        print('packet', packet)
         response = self.client.session.post(
             self.client.host + endpoint,
             json = packet)
