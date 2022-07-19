@@ -30,3 +30,6 @@ sdk/diffgram/task/__pycache__/
 sdk/diffgram/utils/__pycache__/
 
 venv/*
+
+sdk/build/*
+sdk/dist/
