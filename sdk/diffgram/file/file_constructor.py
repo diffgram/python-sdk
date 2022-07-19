@@ -6,6 +6,7 @@ import json
 import os
 import requests
 
+
 class FileConstructor():
     """
 
@@ -87,11 +88,84 @@ class FileConstructor():
 
         data = response.json()
 
-        # print(data)
-
         if data["log"]["success"] is True:
             file = self.file_from_response(file_dict = data['file'])
             return file
+
+    def __build_packet_payload(self,
+                               url: str = None,
+                               media_type: str = None,
+                               instance_list: list = None,
+                               frame_packet_map: dict = None,
+                               video_split_duration: int = None,
+                               job_id: int = None,
+                               job: Job = None,
+                               type: str = None,
+                               connection_id: int = None,
+                               directory_id: int = None,
+                               bucket_name: str = None,
+                               file_name: str = None,
+                               blob_path: str = None):
+        packet = {'media': {}}
+        packet['media']['url'] = url
+        packet['media']['type'] = media_type
+
+        # Existing Instances
+        packet['frame_packet_map'] = frame_packet_map
+        packet['type'] = type
+        packet['connection_id'] = connection_id
+        packet['directory_id'] = directory_id
+        packet['original_filename'] = file_name
+        packet['bucket_name'] = bucket_name
+        packet['raw_data_blob_path'] = blob_path
+        packet['instance_list'] = instance_list
+
+        if job:
+            packet["job_id"] = job.id
+        else:
+            packet["job_id"] = job_id
+
+        if video_split_duration:
+            packet["video_split_duration"] = video_split_duration
+        return packet
+
+    def from_blob_path(self,
+                       blob_path: str,
+                       bucket_name: str,
+                       connection_id: int,
+                       media_type: str = 'image',
+                       instance_list: list = None,
+                       file_name: str = None,
+                       frame_packet_map: dict = None):
+        """
+          Bind a blob path in the given connection ID into Diffgram
+        :param blob_path:
+        :param bucket_name:
+        :param connection_id:
+        :param media_type:
+        :param instance_list:
+        :param frame_packet_map:
+        :return:
+        """
+        if self.client.default_directory:
+            raise Exception("Directory not set. call set_default_directory() to set upload directory.")
+        directory_id = self.client.directory_id
+        name = file_name
+        if file_name is None:
+            name = blob_path.split('/')[len(blob_path.split('/')) - 1]
+        packet = self.__build_packet_payload(
+            media_type = media_type,
+            instance_list = instance_list,
+            frame_packet_map = frame_packet_map,
+            blob_path = blob_path,
+            bucket_name = bucket_name,
+            connection_id = connection_id,
+            file_name = name,
+            directory_id = directory_id,
+            type = "from_blob_path"
+        )
+        self.from_packet(packet = packet)
+        return True
 
     def from_url(
             self,
@@ -126,27 +200,20 @@ class FileConstructor():
 
         """
 
-        packet = {'media': {}}
-        packet['media']['url'] = url
-        packet['media']['type'] = media_type
-
-        # Existing Instances
-        packet['frame_packet_map'] = frame_packet_map
-        packet['instance_list'] = instance_list
-
-        if job:
-            packet["job_id"] = job.id
-        else:
-            packet["job_id"] = job_id
-
-        if video_split_duration:
-            packet["video_split_duration"] = video_split_duration
-
+        packet = self.__build_packet_payload(
+            url = url,
+            media_type = media_type,
+            job = job,
+            job_id = job_id,
+            video_split_duration = video_split_duration,
+            instance_list = instance_list,
+            frame_packet_map = frame_packet_map
+        )
         self.from_packet(packet = packet)
 
         return True
 
-    def format_packet():
+    def format_packet(self):
         raise NotImplementedError
 
     @staticmethod
@@ -168,7 +235,7 @@ class FileConstructor():
         if not media_type:
             raise Exception(" 'type' key is not defined in packet['media'] use one of ['image', 'video']")
 
-    def __validate_existing_instances():
+    def __validate_existing_instances(self):
         pass
 
     def from_packet(
@@ -216,8 +283,6 @@ class FileConstructor():
             'points': [] # Required for polygon more on this coming soon
             'number': 0  # A number is optional, and only relates to video instances
         }
-
-
         Validates basics of packet form
         and makes request to /input/packet endpoint.
 
@@ -325,7 +390,7 @@ class FileConstructor():
             instance_list: list,
             assume_new_instances_machine_made: bool,
             convert_names_to_label_files: bool,
-            check_frame_number: bool = False ):
+            check_frame_number: bool = False):
 
         FileConstructor.sanity_check_instance_list(instance_list)
 
@@ -443,8 +508,6 @@ class FileConstructor():
         if response_json.get('result'):
             return response_json.get('result').get('exists')
 
-
-
     def get_by_id(self,
                   id: int,
                   with_instances: bool = False,
@@ -477,8 +540,8 @@ class FileConstructor():
         else:
             # Add Auth
             response = requests.post(self.client.host + endpoint,
-                          json = spec_dict,
-                          auth = self.client.get_http_auth())
+                                     json = spec_dict,
+                                     auth = self.client.get_http_auth())
 
         self.client.handle_errors(response)
 
