@@ -194,9 +194,10 @@ class Directory(DiffgramDatasetIterator):
         # Confirm not in existing
         # generator expression returns True if the directory
         # is not found. this is a bit awkward.
-        if next((dir for dir in self.client.directory_list
-                 if dir.nickname == name), True) is not True:
-            raise Exception(name, "Already exists")
+        if self.client.directory_list:
+            if next((dir for dir in self.client.directory_list
+                     if dir.nickname == name), True) is not True:
+                raise Exception(name, "Already exists")
 
         packet = {'nickname': name}
 
