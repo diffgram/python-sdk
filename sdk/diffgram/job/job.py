@@ -150,7 +150,6 @@ class Job():
             review_by_human_freqeuncy=None,
             label_mode=None,
             passes_per_file=None,
-            file_list=None,
             guide=None,
             launch_datetime=None,
             label_file_list=None,
@@ -221,12 +220,6 @@ class Job():
             # TODO review better way to update fields
             job.id = data["job"]["id"]
 
-        if file_list:
-            # Careful we want to call job here not self
-            # Since job will have a different id
-            # self is constructor
-            job.file_update(file_list=file_list)
-
         if guide:
             job.guide_update(guide=guide)
 
@@ -243,53 +236,7 @@ class Job():
 
         return job
 
-    def file_update(
-            self,
-            file_list,
-            add_or_remove="add"
-    ):
-        """
 
-        Arguments
-            self,
-            file_list, list of files,
-            add_or_remove, either "add" or "remove"
-
-        Expects
-
-        Returns
-
-        Assumptions
-
-            The API will use the project default if None is supplied
-            but if we are not in the default we must supply valid
-            directory_id
-
-            Otherwise when it checks permissions it will error
-            ie {"file_link":"File link not in incoming directory"}
-
-        """
-
-        endpoint = "/api/v1/project/" + self.client.project_string_id + \
-                   "/job/file/attach"
-
-        file_list = [file.serialize() for file in file_list]
-
-        update_dict = {
-            'directory_id': self.client.directory_id,
-            'file_list_selected': file_list,
-            'job_id': self.id,
-            'add_or_remove': add_or_remove}
-
-        response = self.client.session.post(self.client.host + endpoint,
-                                            json=update_dict)
-
-        self.client.handle_errors(response)
-
-        data = response.json()
-
-        if data["log"]["success"] == True:
-            print("File update success")
 
     def launch(
             self
