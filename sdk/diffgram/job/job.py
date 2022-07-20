@@ -131,7 +131,6 @@ class Job():
             'review_by_human_freqeuncy': self.review_by_human_freqeuncy,
             'label_mode': self.label_mode,
             'passes_per_file': self.passes_per_file,
-            'file_count': self.file_count,
             'attached_directories_dict': self.attached_directories_dict,
             'launch_datetime': self.launch_datetime,
             'label_file_list': label_file_list,
@@ -154,7 +153,6 @@ class Job():
             file_list=None,
             guide=None,
             launch_datetime=None,
-            file_count=None,
             label_file_list=None,
             sync_directories=[],
             single_copy_directories=[],
@@ -208,12 +206,6 @@ class Job():
             self.__add_directory_to_job(directory=dir, mode='sync')
 
         job.attached_directories_dict = {'attached_directories_list': self.attached_directories}
-
-        if not file_count:
-            if file_list:
-                file_count = len(file_list)
-
-        job.file_count = file_count
 
         endpoint = "/api/v1/project/{}/job/new".format(self.client.project_string_id)
 
