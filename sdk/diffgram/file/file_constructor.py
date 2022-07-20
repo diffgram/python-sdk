@@ -39,6 +39,7 @@ class FileConstructor():
     def from_local(
             self,
             path: str,
+            directory_id: int = None,
             instance_list: list = None,
             frame_packet_map: dict = None,
             assume_new_instances_machine_made: bool = True,
@@ -54,35 +55,35 @@ class FileConstructor():
 
         files = {'file': (os.path.basename(path), open(path, 'rb'), 'application/octet-stream')}
 
-        headers = {
-            'immediate_mode': 'True',
-        }
+        json_payload = {}
 
-        payload = {}
+        if directory_id is None:
+            directory_id = self.client.directory_id
+
+        json_payload['directory_id'] = directory_id
 
         if instance_list:
-            payload['instance_list'] = self.__validate_and_format_instance_list(
+            json_payload['instance_list'] = self.__validate_and_format_instance_list(
                 instance_list = instance_list,
                 assume_new_instances_machine_made = assume_new_instances_machine_made,
                 convert_names_to_label_files = convert_names_to_label_files
             )
 
         if frame_packet_map:
-            payload['frame_packet_map'] = self.__validate_and_format_frame_packet_map(
+            json_payload['frame_packet_map'] = self.__validate_and_format_frame_packet_map(
                 frame_packet_map = frame_packet_map,
                 assume_new_instances_machine_made = assume_new_instances_machine_made,
                 convert_names_to_label_files = convert_names_to_label_files
             )
 
-        files['json'] = (None, json.dumps(payload), 'application/json')
+        files['json'] = (None, json.dumps(json_payload), 'application/json')
 
         endpoint = "/api/walrus/v1/project/" + self.client.project_string_id \
                    + "/input/from_local"
 
         response = self.client.session.post(
             self.client.host + endpoint,
-            files = files,
-            headers = headers)
+            files = files)
 
         self.client.handle_errors(response)
 
