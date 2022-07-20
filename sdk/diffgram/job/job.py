@@ -135,7 +135,8 @@ class Job():
             'attached_directories_dict': self.attached_directories_dict,
             'launch_datetime': self.launch_datetime,
             'label_file_list': label_file_list,
-            'member_list_ids': self.member_list_ids
+            'member_list_ids': self.member_list_ids,
+            'tag_list': self.tag_list
         }
 
     def new(self,
@@ -159,6 +160,7 @@ class Job():
             single_copy_directories=[],
             members_list_ids = [],
             auto_launch=True,
+            tag_list = [],
             ):
         """
 
@@ -193,6 +195,7 @@ class Job():
         job.label_schema_id = label_schema_id
         job.attached_directories = []
         job.member_list_ids = members_list_ids
+        job.tag_list = tag_list
 
         if len(sync_directories) == 0 and len(single_copy_directories) == 0:
             raise ValueError(
