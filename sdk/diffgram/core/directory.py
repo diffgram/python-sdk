@@ -70,6 +70,8 @@ class Directory(DiffgramDatasetIterator):
             )
             refresh_from_dict(new_directory, directory_json)
 
+            new_directory.id = new_directory.directory_id
+
             # note timing issue, this needs to happen after id is refreshed
             new_directory.init_files()
             new_directory.start_iterator(

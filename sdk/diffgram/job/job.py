@@ -131,11 +131,11 @@ class Job():
             'review_by_human_freqeuncy': self.review_by_human_freqeuncy,
             'label_mode': self.label_mode,
             'passes_per_file': self.passes_per_file,
-            'file_count': self.file_count,
             'attached_directories_dict': self.attached_directories_dict,
             'launch_datetime': self.launch_datetime,
             'label_file_list': label_file_list,
-            'member_list_ids': self.member_list_ids
+            'member_list_ids': self.member_list_ids,
+            'tag_list': self.tag_list
         }
 
     def new(self,
@@ -150,15 +150,13 @@ class Job():
             review_by_human_freqeuncy=None,
             label_mode=None,
             passes_per_file=None,
-            file_list=None,
             guide=None,
             launch_datetime=None,
-            file_count=None,
-            label_file_list=None,
             sync_directories=[],
             single_copy_directories=[],
             members_list_ids = [],
             auto_launch=True,
+            tag_list = [],
             ):
         """
 
@@ -178,6 +176,10 @@ class Job():
             raise ValueError('Please provide at least one member_id in members_list_ids.')
         job = Job(client=self.client)
 
+        if label_schema_id is None:
+            if self.client.label_schema_list:
+                label_schema_id = self.client.label_schema_list[0].get('id')
+
         job.name = name
         job.instance_type = instance_type
         job.share = share
@@ -189,10 +191,10 @@ class Job():
         job.label_mode = label_mode
         job.passes_per_file = passes_per_file
         job.launch_datetime = launch_datetime
-        job.label_file_list = label_file_list
         job.label_schema_id = label_schema_id
         job.attached_directories = []
         job.member_list_ids = members_list_ids
+        job.tag_list = tag_list
 
         if len(sync_directories) == 0 and len(single_copy_directories) == 0:
             raise ValueError(
@@ -205,12 +207,6 @@ class Job():
             self.__add_directory_to_job(directory=dir, mode='sync')
 
         job.attached_directories_dict = {'attached_directories_list': self.attached_directories}
-
-        if not file_count:
-            if file_list:
-                file_count = len(file_list)
-
-        job.file_count = file_count
 
         endpoint = "/api/v1/project/{}/job/new".format(self.client.project_string_id)
 
@@ -225,12 +221,6 @@ class Job():
         if data["log"]["success"] == True:
             # TODO review better way to update fields
             job.id = data["job"]["id"]
-
-        if file_list:
-            # Careful we want to call job here not self
-            # Since job will have a different id
-            # self is constructor
-            job.file_update(file_list=file_list)
 
         if guide:
             job.guide_update(guide=guide)
@@ -248,53 +238,7 @@ class Job():
 
         return job
 
-    def file_update(
-            self,
-            file_list,
-            add_or_remove="add"
-    ):
-        """
 
-        Arguments
-            self,
-            file_list, list of files,
-            add_or_remove, either "add" or "remove"
-
-        Expects
-
-        Returns
-
-        Assumptions
-
-            The API will use the project default if None is supplied
-            but if we are not in the default we must supply valid
-            directory_id
-
-            Otherwise when it checks permissions it will error
-            ie {"file_link":"File link not in incoming directory"}
-
-        """
-
-        endpoint = "/api/v1/project/" + self.client.project_string_id + \
-                   "/job/file/attach"
-
-        file_list = [file.serialize() for file in file_list]
-
-        update_dict = {
-            'directory_id': self.client.directory_id,
-            'file_list_selected': file_list,
-            'job_id': self.id,
-            'add_or_remove': add_or_remove}
-
-        response = self.client.session.post(self.client.host + endpoint,
-                                            json=update_dict)
-
-        self.client.handle_errors(response)
-
-        data = response.json()
-
-        if data["log"]["success"] == True:
-            print("File update success")
 
     def launch(
             self
