@@ -177,6 +177,10 @@ class Job():
             raise ValueError('Please provide at least one member_id in members_list_ids.')
         job = Job(client=self.client)
 
+        if label_schema_id is None:
+            if self.client.label_schema_list:
+                label_schema_id = self.client.label_schema_list[0].get('id')
+
         job.name = name
         job.instance_type = instance_type
         job.share = share
