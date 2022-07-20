@@ -152,7 +152,6 @@ class Job():
             passes_per_file=None,
             guide=None,
             launch_datetime=None,
-            label_file_list=None,
             sync_directories=[],
             single_copy_directories=[],
             members_list_ids = [],
@@ -192,7 +191,6 @@ class Job():
         job.label_mode = label_mode
         job.passes_per_file = passes_per_file
         job.launch_datetime = launch_datetime
-        job.label_file_list = label_file_list
         job.label_schema_id = label_schema_id
         job.attached_directories = []
         job.member_list_ids = members_list_ids
