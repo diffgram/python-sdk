@@ -241,6 +241,30 @@ class Job():
         return job
 
 
+    def list(self, 
+             limit=10, 
+             status="All"):
+
+        # Example usage print(project.job.list().json())
+
+        endpoint = "/api/v1/job/list"
+
+        request_json_body = {"metadata": 
+            {
+            "limit": limit,
+            "status": status,
+            "project_string_id": self.client.project_string_id
+            }
+        }
+
+        response = self.client.session.post(
+            self.client.host + endpoint, 
+            json=request_json_body)
+
+        self.client.handle_errors(response)
+
+        return response
+
 
     def launch(
             self
