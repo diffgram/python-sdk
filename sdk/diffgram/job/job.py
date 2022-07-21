@@ -201,12 +201,14 @@ class Job():
                 'Please provide at least one attached directory to the job in either sync_directories param or single_copy_directories')
 
         for dir in sync_directories:
-            self.__add_directory_to_job(directory=dir, mode='sync')
+            job.__add_directory_to_job(directory=dir, mode='sync')
 
         for dir in single_copy_directories:
-            self.__add_directory_to_job(directory=dir, mode='sync')
+            job.__add_directory_to_job(directory=dir, mode='sync')
 
-        job.attached_directories_dict = {'attached_directories_list': self.attached_directories}
+        job.attached_directories_dict = {
+            'attached_directories_list': job.attached_directories
+        }
 
         endpoint = "/api/v1/project/{}/job/new".format(self.client.project_string_id)
 
