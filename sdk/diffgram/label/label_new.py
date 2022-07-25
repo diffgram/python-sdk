@@ -36,6 +36,6 @@ def label_new(self,
     self.get_label_file_dict()
 
     if data["log"]["success"] == True:
-        return
+        return data['label']
     else:
         raise Exception(data["log"]["error"])
