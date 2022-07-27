@@ -12,6 +12,7 @@ from diffgram.job.guide import Guide
 from diffgram.brain.brain import Brain
 from diffgram.file.file_constructor import FileConstructor
 from diffgram.file.file import File
+from diffgram.role.Role import Role
 from diffgram.brain.train import Train
 from diffgram.export.export import Export
 from diffgram.task.task import Task
@@ -62,7 +63,8 @@ class Project():
         #self.train = Train(self)
         self.job = Job(self)
         self.guide = Guide(self)
-        self.directory = Directory(self, 
+        self.roles = Role(self)
+        self.directory = Directory(self,
                                    init_file_ids = False,
                                    validate_ids = False)
         self.export = Export(self)
