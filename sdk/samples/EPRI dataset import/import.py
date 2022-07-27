@@ -3,6 +3,9 @@ import ast
 import pandas as pd
 from dotenv import load_dotenv
 from diffgram import Project
+import time
+
+start_time = time.time()
 
 load_dotenv()
 
@@ -15,24 +18,48 @@ project = Project(
     host = os.getenv('HOST')
 )
 
+list = project.directory.get(name="Default").list_files()
+
+for file in list:
+    original_filename = file.__dict__['original_filename']
+    initia_filename = original_filename.replace('_', ' (').replace('.', ').')
+    if initia_filename in image_list:
+        image_list.remove(initia_filename)
+
+shema_list = project.get_label_schema_list()
+
 number_of_images = None
-while number_of_images is None:
+while True:
     try:
         number_of_images_to_import = input("How many images do you want to import? (blank to import all) ")
-        if not number_of_images_to_import:
+        if number_of_images_to_import == '':
             number_of_images = len(image_list)
+            break
         number_of_images = int(number_of_images_to_import)
+        break
     except:
         print("Invalid input: please input positive number")
 
-image_list = image_list[:int(number_of_images_to_import)]
+image_list = image_list[:number_of_images]
 
 new_schema_name = None
+imported_label_traker = []
+lables_objects = {}
 while True:
     try:
-        new_schema_name = input("Give a name for a new schema: ")
-        schema = project.new_schema(name=new_schema_name)
-        print("Schema successfully created")
+        new_schema_name = input("Shema name (if shema with this name already exists - it will be used, otherwise new shema will be created): ")
+        shema_list = project.get_label_schema_list()
+        schema = [existing_schema for existing_schema in shema_list if existing_schema.get('name') == new_schema_name]
+        if not schema:
+            schema = project.new_schema(name=new_schema_name)
+            print("Schema successfully created")
+        else:
+            schema = schema[0]
+            schema_label_list = project.get_label_list(schema.get('id'))
+            for label in schema_label_list:
+                imported_label_traker.append(label['label']['name'])
+                lables_objects[label['label']['name']] = label
+            pass
         break
     except:
         print("Seems like schema with this name already exists")
@@ -48,9 +75,6 @@ while True:
         break
     except:
         print("Seems like annotation file is not here")
-
-imported_label_traker = []
-lables_objects = {}
 
 succeslully_imported = []
 import_errors = []
@@ -106,3 +130,5 @@ for image in image_list:
 
 print(f"Successfully imported {len(succeslully_imported)} file(s): ", succeslully_imported)
 print(f"Errors while importing {len(succeslully_imported)} file(s): ", import_errors)
+
+print("--- %s seconds ---" % (time.time() - start_time))
