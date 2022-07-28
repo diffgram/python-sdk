@@ -13,7 +13,7 @@ blob_url = os.getenv('BLOCK_CONTAINER_URL')
 bucket_name = os.getenv('BUCKET_NAME')
 
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-container_client = blob_service_client.get_container_client('bandmac') 
+container_client = blob_service_client.get_container_client(bucket_name) 
 
 azure_image_list = container_client.list_blobs()
 
