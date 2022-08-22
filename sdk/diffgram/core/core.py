@@ -243,6 +243,8 @@ class Project():
             raise (Exception("404 Not Found" + response.text))
 
         if response.status_code == 429:
+            if response.headers:
+                print(response.headers)     # for rate limit and reset values
             raise Exception(
                 "Rate Limited. Please add buffer between calls eg time.sleep(1). Otherwise, please try again later. Else contact us if this persists.")
 
