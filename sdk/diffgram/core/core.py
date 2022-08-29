@@ -20,6 +20,7 @@ from requests.auth import HTTPBasicAuth
 
 class Project():
     default_directory: Directory
+    last_response_header: None
 
     def __init__(
             self,
@@ -224,6 +225,9 @@ class Project():
         This is under the assumption that we generaly call response.json()
         after this, and that fails in poor way if there is no json available.
         """
+
+        if response.headers:
+            self.last_response_header = response.headers
 
         # Default
         if response.status_code == 200:
