@@ -296,29 +296,8 @@ class Project():
 
         """
 
-        if name is None:
-            raise Exception("No name provided.")
-
-        # Don't refresh by default, just set from existing
-
-        names_attempted = []
-        did_set = False
-
-        if not self.directory_list:
-            self.directory_list = self.directory.get_directory_list()
-
-        for directory in self.directory_list:
-
-            if directory.nickname == name:
-                self.set_default_directory(directory = directory)
-                did_set = True
-                break
-            else:
-                names_attempted.append(directory.nickname)
-
-        if did_set is False:
-            raise Exception(name, " does not exist. Valid names are: " +
-                            str(names_attempted))
+        directory = self.directory.get(name = name)
+        self.set_default_directory(directory = directory)
 
 
     def set_default_directory(self,
