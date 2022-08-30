@@ -299,7 +299,7 @@ class Directory(DiffgramDatasetIterator):
             return file_list
 
     def get(self,
-            name: str):
+            name: str = None):
 
         """
 
@@ -310,8 +310,6 @@ class Directory(DiffgramDatasetIterator):
          TODO refactor set_directory_by_name() to use this
 
         """
-        if name is None:
-            raise Exception("No name provided.")
 
         # Cache
         if not self.client.directory_list:

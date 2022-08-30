@@ -21,6 +21,7 @@ from requests.auth import HTTPBasicAuth
 class Project():
     default_directory: Directory
     last_response_header: None
+    directory_list: list
 
     def __init__(
             self,
@@ -34,6 +35,7 @@ class Project():
             refresh_local_label_dict = True
 
     ):
+        self.directory_list = []
 
         self.session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections = 30, pool_maxsize = 30)
@@ -84,7 +86,6 @@ class Project():
 
         self.label_schema_list = self.get_label_schema_list()
 
-        self.directory_list = None
 
 
     def get_member_list(self):
@@ -314,8 +315,11 @@ class Project():
         if directory is not None:
             self.directory_id = directory.id
             self.default_directory = directory
-        if not hasattr(self, 'directory_list'):
-            self.directory_list = self.directory.get_directory_list()
+
+        if self.directory_id is None:
+            default_directory = self.directory.get()
+            self.directory_id = default_directory.id
+            self.default_directory = default_directory
 
         self.session.headers.update(
             {'directory_id': str(self.directory_id)})
