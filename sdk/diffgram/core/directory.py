@@ -27,6 +27,8 @@ class Directory(DiffgramDatasetIterator):
 
     def init_files(self):
         self.file_id_list = self.all_file_ids()
+
+
     def get_directory_list(self):
         """
         Get a list of available directories for a project
@@ -54,11 +56,14 @@ class Directory(DiffgramDatasetIterator):
         if default_directory_json:
             self.client.directory_id = default_directory_json.get('id')
 
-        directory_list = self.convert_json_to_sdk_object(directory_list_json)
+        directory_list = self.convert_json_list_to_sdk_object(directory_list_json)
 
         return directory_list
 
-    def convert_json_to_sdk_object(self, directory_list_json):
+    def convert_json_list_to_sdk_object(self, directory_list_json: list):
+
+        if type(directory_list_json) != list:
+            raise Exception("directory_list_json must be type: list")
 
         directory_list = []
 
@@ -218,7 +223,7 @@ class Directory(DiffgramDatasetIterator):
         if project:
             directory_list_json = project.get('directory_list')
             if directory_list_json:
-                self.client.directory_list = self.convert_json_to_sdk_object(directory_list_json)
+                self.client.directory_list = self.convert_json_list_to_sdk_object(directory_list_json)
 
         new_directory = None
         # TODO the route about should return the newly created dataset directly
@@ -304,24 +309,34 @@ class Directory(DiffgramDatasetIterator):
         if name is None:
             raise Exception("No name provided.")
 
-        names_attempted = []
-        did_set = False
-
+        # Cache
         if not self.client.directory_list:
-            self.client.directory_list = self.get_directory_list()
+            self.client.directory_list = []
 
         for directory in self.client.directory_list:
-
             if directory.nickname == name:
                 directory.init_files()
                 return directory
 
-            else:
-                names_attempted.append(directory.nickname)
+        params = {'name': name}
 
-        if did_set is False:
-            raise Exception(name, " does not exist. Valid names are: " +
-                            str(names_attempted))
+        endpoint = "/api/project/" + \
+                   self.client.project_string_id + "/user/legacy/working_dir/view"
+
+        response = self.client.session.get(
+            self.client.host + endpoint,
+            params = params)
+
+        self.client.handle_errors(response)
+
+        data = response.json()
+        directory_json = data.get('working_dir')
+        directory_list = self.convert_json_list_to_sdk_object([directory_json])
+        directory = directory_list[0]
+        self.client.directory_list.append(directory)
+
+        return directory
+
 
     def add(self,
             file_list: list = None,
