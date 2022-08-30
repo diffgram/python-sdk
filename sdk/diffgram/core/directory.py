@@ -29,7 +29,7 @@ class Directory(DiffgramDatasetIterator):
         self.file_id_list = self.all_file_ids()
 
 
-    def get_directory_list(self):
+    def get_directory_list(self, limit=10):
         """
         Get a list of available directories for a project
         """
@@ -44,7 +44,11 @@ class Directory(DiffgramDatasetIterator):
         endpoint = "/api/v1/project/" + self.client.project_string_id + \
                    "/directory/list"
 
-        response = self.client.session.get(self.client.host + endpoint)
+        request_json_body = {'limit': limit}
+
+        response = self.client.session.post(
+            self.client.host + endpoint,
+            json = request_json_body)
 
         self.client.handle_errors(response)
 
