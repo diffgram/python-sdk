@@ -48,7 +48,6 @@ class Project():
         if host is None:
             if self.debug is True:
                 self.host = "http://127.0.0.1:8085"
-                print("Debug", __version__)
             elif self.staging is True:
                 self.host = "https://20200110t142358-dot-walrus-dot-diffgram-001.appspot.com/"
             else:
@@ -79,7 +78,6 @@ class Project():
 
         if init_default_directory is True:
             self.set_default_directory(directory = self.directory)
-            print("Default directory set:", self.directory_id)
 
         if refresh_local_label_dict is True:
             self.get_label_file_dict()

@@ -148,7 +148,7 @@ class FileConstructor():
         :param frame_packet_map:
         :return:
         """
-        if self.client.default_directory:
+        if not self.client.default_directory:
             raise Exception("Directory not set. call set_default_directory() to set upload directory.")
         directory_id = self.client.directory_id
         name = file_name
