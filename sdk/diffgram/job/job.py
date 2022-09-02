@@ -239,9 +239,17 @@ class Job():
         return job
 
     def list(self,
-             limit = 10,
-             status = "All",
+             limit = 100,
+             status = ["All"],
+             name = None,
              tags = []):
+        """
+
+        :param limit:
+        :param status: a list with any of the values: ["All", "draft", "active", "complete", "cancelled"]
+        :param tags:
+        :return:
+        """
 
         # Example usage print(project.job.list().json())
         tag_id_list = None
@@ -259,6 +267,7 @@ class Job():
             {
                 "limit": limit,
                 "data_mode": "with_tags",
+                "search": name,
                 "status": status,
                 "tag_list": tag_id_list,
                 "project_string_id": self.client.project_string_id
@@ -344,6 +353,23 @@ class Job():
 
         if data["log"]["success"] == True:
             print("Guide update success")
+            return True
+
+        return False
+
+    def archive_jobs(self, id_list: list):
+        job_list = [{'id': elm} for elm in id_list]
+        endpoint = "/api/v1/job/cancel"
+
+        payload = {'job_list': job_list, 'mode': 'archive'}
+
+        response = self.client.session.post(self.client.host + endpoint, json = payload)
+
+        self.client.handle_errors(response)
+
+        data = response.json()
+
+        if data["log"]["success"] == True:
             return True
 
         return False

@@ -56,6 +56,5 @@ def get_label_file_dict(self, schema_id = None, use_session = True):
     data = response.json()
     if data["log"]["success"] == True:
         self.name_to_file_id = data["name_to_file_id"]
-        print("Loaded schema")
     else:
         raise Exception(data["log"]["errors"])
