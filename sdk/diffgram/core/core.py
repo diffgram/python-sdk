@@ -21,6 +21,8 @@ from requests.auth import HTTPBasicAuth
 
 class Project():
     default_directory: Directory
+    last_response_header: None
+    directory_list: list
 
     def __init__(
             self,
@@ -34,6 +36,7 @@ class Project():
             refresh_local_label_dict = True
 
     ):
+        self.directory_list = []
 
         self.session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections = 30, pool_maxsize = 30)
@@ -46,7 +49,6 @@ class Project():
         if host is None:
             if self.debug is True:
                 self.host = "http://127.0.0.1:8085"
-                print("Debug", __version__)
             elif self.staging is True:
                 self.host = "https://20200110t142358-dot-walrus-dot-diffgram-001.appspot.com/"
             else:
@@ -78,14 +80,12 @@ class Project():
 
         if init_default_directory is True:
             self.set_default_directory(directory = self.directory)
-            print("Default directory set:", self.directory_id)
 
         if refresh_local_label_dict is True:
             self.get_label_file_dict()
 
         self.label_schema_list = self.get_label_schema_list()
 
-        self.directory_list = None
 
 
     def get_member_list(self):
@@ -227,6 +227,9 @@ class Project():
         after this, and that fails in poor way if there is no json available.
         """
 
+        if response.headers:
+            self.last_response_header = response.headers
+
         # Default
         if response.status_code == 200:
             return
@@ -245,6 +248,8 @@ class Project():
             raise (Exception("404 Not Found" + response.text))
 
         if response.status_code == 429:
+            if response.headers:
+                print(response.headers)     # for rate limit and reset values
             raise Exception(
                 "Rate Limited. Please add buffer between calls eg time.sleep(1). Otherwise, please try again later. Else contact us if this persists.")
 
@@ -292,29 +297,8 @@ class Project():
 
         """
 
-        if name is None:
-            raise Exception("No name provided.")
-
-        # Don't refresh by default, just set from existing
-
-        names_attempted = []
-        did_set = False
-
-        if not self.directory_list:
-            self.directory_list = self.directory.get_directory_list()
-
-        for directory in self.directory_list:
-
-            if directory.nickname == name:
-                self.set_default_directory(directory = directory)
-                did_set = True
-                break
-            else:
-                names_attempted.append(directory.nickname)
-
-        if did_set is False:
-            raise Exception(name, " does not exist. Valid names are: " +
-                            str(names_attempted))
+        directory = self.directory.get(name = name)
+        self.set_default_directory(directory = directory)
 
 
     def set_default_directory(self,
@@ -331,8 +315,11 @@ class Project():
         if directory is not None:
             self.directory_id = directory.id
             self.default_directory = directory
-        if not hasattr(self, 'directory_list'):
-            self.directory_list = self.directory.get_directory_list()
+
+        if self.directory_id is None:
+            default_directory = self.directory.get()
+            self.directory_id = default_directory.id
+            self.default_directory = default_directory
 
         self.session.headers.update(
             {'directory_id': str(self.directory_id)})

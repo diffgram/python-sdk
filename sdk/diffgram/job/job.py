@@ -5,7 +5,7 @@ class Job():
 
     def __init__(self,
                  client,
-                 job_dict=None):
+                 job_dict = None):
 
         self.client = client
 
@@ -36,11 +36,11 @@ class Job():
         self.attached_directories_dict = None
 
         self.refresh_from_dict(
-            job_dict=job_dict)
+            job_dict = job_dict)
 
     def refresh_from_dict(
             self,
-            job_dict=None):
+            job_dict = None):
 
         if not job_dict:
             return
@@ -51,7 +51,7 @@ class Job():
     def __repr__(self):
         return str(self.serialize())
 
-    def __add_directory_to_job(self, directory: Directory, mode='sync'):
+    def __add_directory_to_job(self, directory: Directory, mode = 'sync'):
         """
 
         :param directories: Array of directories Objects
@@ -67,7 +67,7 @@ class Job():
         )
         return self.attached_directories
 
-    def attach_directories(self, directories, mode='sync', override_existing=False):
+    def attach_directories(self, directories, mode = 'sync', override_existing = False):
         """
             Attaches directories to a job.
         :param directories: Array of directories Objects
@@ -96,7 +96,7 @@ class Job():
         data['job_id'] = self.id
         response = self.client.session.post(
             self.client.host + endpoint,
-            json=data)
+            json = data)
 
         self.client.handle_errors(response)
 
@@ -139,23 +139,23 @@ class Job():
         }
 
     def new(self,
-            name=None,
-            instance_type=None,
-            share="project",
-            job_type="Normal",
+            name = None,
+            instance_type = None,
+            share = "project",
+            job_type = "Normal",
             label_schema_id = None,
-            permission=None,
-            field=None,
-            category=None,
-            review_by_human_freqeuncy=None,
-            label_mode=None,
-            passes_per_file=None,
-            guide=None,
-            launch_datetime=None,
-            sync_directories=[],
-            single_copy_directories=[],
+            permission = None,
+            field = None,
+            category = None,
+            review_by_human_freqeuncy = None,
+            label_mode = None,
+            passes_per_file = None,
+            guide = None,
+            launch_datetime = None,
+            sync_directories = [],
+            single_copy_directories = [],
             members_list_ids = [],
-            auto_launch=True,
+            auto_launch = True,
             tag_list = [],
             ):
         """
@@ -174,7 +174,7 @@ class Job():
         # QUESTION create job object eariler instead of after response?
         if len(members_list_ids) == 0:
             raise ValueError('Please provide at least one member_id in members_list_ids.')
-        job = Job(client=self.client)
+        job = Job(client = self.client)
 
         if label_schema_id is None:
             if self.client.label_schema_list:
@@ -201,10 +201,10 @@ class Job():
                 'Please provide at least one attached directory to the job in either sync_directories param or single_copy_directories')
 
         for dir in sync_directories:
-            job.__add_directory_to_job(directory=dir, mode='sync')
+            job.__add_directory_to_job(directory = dir, mode = 'sync')
 
         for dir in single_copy_directories:
-            job.__add_directory_to_job(directory=dir, mode='sync')
+            job.__add_directory_to_job(directory = dir, mode = 'sync')
 
         job.attached_directories_dict = {
             'attached_directories_list': job.attached_directories
@@ -214,7 +214,7 @@ class Job():
 
         response = self.client.session.post(
             self.client.host + endpoint,
-            json=job.serialize())
+            json = job.serialize())
 
         self.client.handle_errors(response)
 
@@ -225,7 +225,7 @@ class Job():
             job.id = data["job"]["id"]
 
         if guide:
-            job.guide_update(guide=guide)
+            job.guide_update(guide = guide)
 
         if auto_launch:
             endpoint_launch = "/api/v1/job/launch".format(self.client.project_string_id)
@@ -236,35 +236,51 @@ class Job():
                 })
             self.client.handle_errors(response)
 
-
-
         return job
 
+    def list(self,
+             limit = 100,
+             status = ["All"],
+             name = None,
+             tags = []):
+        """
 
-    def list(self, 
-             limit=10, 
-             status="All"):
+        :param limit:
+        :param status: a list with any of the values: ["All", "draft", "active", "complete", "cancelled"]
+        :param tags:
+        :return:
+        """
 
         # Example usage print(project.job.list().json())
-
+        tag_id_list = None
+        if len(tags) > 0:
+            # fetch tag id list
+            tag_path = f'/api/v1/project/{self.client.project_string_id}/tags/list'
+            response_tags = self.client.session.get(self.client.host + tag_path)
+            tag_list = response_tags.json()['tag_list']
+            tag_id_list = []
+            for elm in tag_list:
+                if elm['name'] in tags:
+                    tag_id_list.append(elm['id'])
         endpoint = "/api/v1/job/list"
-
-        request_json_body = {"metadata": 
+        request_json_body = {"metadata":
             {
-            "limit": limit,
-            "status": status,
-            "project_string_id": self.client.project_string_id
+                "limit": limit,
+                "data_mode": "with_tags",
+                "search": name,
+                "status": status,
+                "tag_list": tag_id_list,
+                "project_string_id": self.client.project_string_id
             }
         }
 
         response = self.client.session.post(
-            self.client.host + endpoint, 
-            json=request_json_body)
+            self.client.host + endpoint,
+            json = request_json_body)
 
         self.client.handle_errors(response)
-
-        return response
-
+        result = response.json()
+        return result['Job_list']
 
     def launch(
             self
@@ -288,7 +304,7 @@ class Job():
 
         response = self.client.session.post(
             self.client.host + endpoint,
-            json=request)
+            json = request)
 
         self.client.handle_errors(response)
 
@@ -303,8 +319,8 @@ class Job():
     def guide_update(
             self,
             guide,
-            kind="default",
-            action="update"
+            kind = "default",
+            action = "update"
     ):
         """
 
@@ -329,7 +345,7 @@ class Job():
                        'update_or_remove': action}
 
         response = self.client.session.post(self.client.host + endpoint,
-                                            json=update_dict)
+                                            json = update_dict)
 
         self.client.handle_errors(response)
 
@@ -341,13 +357,30 @@ class Job():
 
         return False
 
+    def archive_jobs(self, id_list: list):
+        job_list = [{'id': elm} for elm in id_list]
+        endpoint = "/api/v1/job/cancel"
+
+        payload = {'job_list': job_list, 'mode': 'archive'}
+
+        response = self.client.session.post(self.client.host + endpoint, json = payload)
+
+        self.client.handle_errors(response)
+
+        data = response.json()
+
+        if data["log"]["success"] == True:
+            return True
+
+        return False
+
     def get_by_id(
             self,
             id: int):
         """
         """
 
-        job = Job(client=self.client)
+        job = Job(client = self.client)
         job.id = id
 
         job.refresh_info()
@@ -356,13 +389,13 @@ class Job():
 
     def generate_export(
             self,
-            kind='Annotations',
-            return_type="data",
-            source="job",
-            masks=False,
-            directory_id=None,
-            wait_for_export_generation=True,
-            ann_is_complete=None    # Bool. None=='all', True=='complete' tasks only
+            kind = 'Annotations',
+            return_type = "data",
+            source = "job",
+            masks = False,
+            directory_id = None,
+            wait_for_export_generation = True,
+            ann_is_complete = None  # Bool. None=='all', True=='complete' tasks only
     ):
         """
 
@@ -400,7 +433,7 @@ class Job():
         }
 
         response = self.client.session.post(self.client.host + endpoint,
-                                            json=spec_dict)
+                                            json = spec_dict)
 
         self.client.handle_errors(response)
 
@@ -414,7 +447,7 @@ class Job():
 
     def refresh_info(
             self,
-            mode_data=None
+            mode_data = None
     ):
         """
         Assumptions
@@ -434,7 +467,7 @@ class Job():
 
         response = self.client.session.post(
             self.client.host + endpoint,
-            json=spec_dict)
+            json = spec_dict)
 
         self.client.handle_errors(response)
 
@@ -443,4 +476,4 @@ class Job():
         # print(data)
 
         self.refresh_from_dict(
-            job_dict=data['job'])
+            job_dict = data['job'])
