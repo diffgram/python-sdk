@@ -12,6 +12,7 @@ from diffgram.job.guide import Guide
 from diffgram.brain.brain import Brain
 from diffgram.file.file_constructor import FileConstructor
 from diffgram.file.file import File
+from diffgram.role.Role import Role
 from diffgram.brain.train import Train
 from diffgram.export.export import Export
 from diffgram.task.task import Task
@@ -64,7 +65,8 @@ class Project():
         #self.train = Train(self)
         self.job = Job(self)
         self.guide = Guide(self)
-        self.directory = Directory(self, 
+        self.roles = Role(self)
+        self.directory = Directory(self,
                                    init_file_ids = False,
                                    validate_ids = False)
         self.export = Export(self)
@@ -92,6 +94,17 @@ class Project():
         self.handle_errors(response)
         data = response.json()
         return data['project']['member_list']
+
+    def get_member(self, email):
+        url = '/api/project/{}/view'.format(self.project_string_id)
+        response = self.session.get(url = self.host + url)
+        self.handle_errors(response)
+        data = response.json()
+        for member in data['project']['member_list']:
+            if member['email'] == email:
+                return member
+
+        return None
 
     def get_label_schema_by_id(self, id):
         if self.label_schema_list is None or len(self.label_schema_list) == 0:

@@ -8,12 +8,12 @@ import tempfile
 try:
 	import cv2
 except:
-	print("Could not import cv2")
+	print("Warning: Could not import cv2. Some SDK functions may not be available.")
 
 try:
 	import tensorflow as tf
 except:
-	print("Could not import tensorflow")
+	print("Warning: Could not import tensorflow. Some SDK functions may not be available")
 
 import numpy as np
 import requests

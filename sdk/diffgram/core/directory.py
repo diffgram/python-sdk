@@ -190,7 +190,7 @@ class Directory(DiffgramDatasetIterator):
         )
         return diffgram_tensorflow_dataset
 
-    def new(self, name: str):
+    def new(self, name: str, access_type = 'project'):
         """
         Create a new directory and update directory list.
 
@@ -210,8 +210,7 @@ class Directory(DiffgramDatasetIterator):
                      if dir.nickname == name), True) is not True:
                 raise Exception(name, "Already exists")
 
-        packet = {'nickname': name}
-
+        packet = {'nickname': name, 'access_type': access_type}
         endpoint = "/api/v1/project/" + \
                    self.client.project_string_id + "/directory/new"
 
