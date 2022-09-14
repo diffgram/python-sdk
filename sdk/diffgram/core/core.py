@@ -95,6 +95,17 @@ class Project():
         data = response.json()
         return data['project']['member_list']
 
+    def get_member(self, email):
+        url = '/api/project/{}/view'.format(self.project_string_id)
+        response = self.session.get(url = self.host + url)
+        self.handle_errors(response)
+        data = response.json()
+        for member in data['project']['member_list']:
+            if member['email'] == email:
+                return member
+
+        return None
+
     def get_label_schema_by_id(self, id):
         if self.label_schema_list is None or len(self.label_schema_list) == 0:
             self.label_schema_list = self.get_label_schema_list()
