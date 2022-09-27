@@ -43,7 +43,8 @@ class FileConstructor():
             instance_list: list = None,
             frame_packet_map: dict = None,
             assume_new_instances_machine_made: bool = True,
-            convert_names_to_label_files: bool = True
+            convert_names_to_label_files: bool = True,
+            parent_file_id: int = None
     ):
         """
         Create a Project file from local path
@@ -106,7 +107,8 @@ class FileConstructor():
                                directory_id: int = None,
                                bucket_name: str = None,
                                file_name: str = None,
-                               blob_path: str = None):
+                               blob_path: str = None,
+                               parent_file_id: int = None):
         packet = {'media': {}}
         packet['media']['url'] = url
         packet['media']['type'] = media_type
@@ -115,6 +117,7 @@ class FileConstructor():
         packet['frame_packet_map'] = frame_packet_map
         packet['type'] = type
         packet['connection_id'] = connection_id
+        packet['parent_file_id'] = parent_file_id
         packet['directory_id'] = directory_id
         packet['original_filename'] = file_name
         packet['bucket_name'] = bucket_name
@@ -137,7 +140,8 @@ class FileConstructor():
                        media_type: str = 'image',
                        instance_list: list = None,
                        file_name: str = None,
-                       frame_packet_map: dict = None):
+                       frame_packet_map: dict = None,
+                       parent_file_id: int = None):
         """
           Bind a blob path in the given connection ID into Diffgram
         :param blob_path:
@@ -176,7 +180,8 @@ class FileConstructor():
             job_id: int = None,
             video_split_duration: int = None,
             instance_list: list = None,  # for Images
-            frame_packet_map: dict = None  # for Video
+            frame_packet_map: dict = None,  # for Video
+            parent_file_id: int = None
     ):
         """
 
