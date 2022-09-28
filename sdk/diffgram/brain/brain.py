@@ -1,19 +1,16 @@
 from diffgram.brain.inference import Inference
 
-
 import tempfile
 
-# TODO import these only if local prediction is needed
+try:
+    import cv2
+except:
+    print("Warning: Could not import cv2. Some SDK functions may not be available.")
 
 try:
-	import cv2
+    import tensorflow as tf
 except:
-	print("Warning: Could not import cv2. Some SDK functions may not be available.")
-
-try:
-	import tensorflow as tf
-except:
-	print("Warning: Could not import tensorflow. Some SDK functions may not be available")
+    print("Warning: Could not import tensorflow. Some SDK functions may not be available")
 
 import numpy as np
 import requests
@@ -24,562 +21,525 @@ import diffgram.utils.visualization_utils as vis_util
 
 class Brain():
 
-	def __init__(
-			self, 
-			client,
-			name=None,
-			id=None,
-			local=False,
-			use_temp_storage=True
-			):
-		"""
-		client, project client object
-		name, string, exact match for Project AI name
-		local, bool, run model locally
+    def __init__(
+            self,
+            client,
+            name = None,
+            id = None,
+            local = False,
+            use_temp_storage = True
+    ):
+        """
+        client, project client object
+        name, string, exact match for Project AI name
+        local, bool, run model locally
+
+        if local is true will perform additional setup work local_setup()
+
+        """
+
+        self.client = client
+
+        if self.client.project_string_id is None:
+            raise Exception("\n No project string id in client.")
+
+        self.name = name
+        self.id = id
+        self.status = None
+        self.local = local
+        self.method = None
+        self.sub_method = None
+        self.min_score_thresh = .5
+        self.build_complete = None
+        self.model_path = None
+        self.image_to_run = None
 
-		if local is true will perform additional setup work local_setup()
+        self.use_temp_storage = use_temp_storage
+        self.local_model_storage_path = None
 
-		"""
+        if self.local is True:
+            # These are only needed for local operations
+            self.temp = tempfile.mkdtemp()
 
-		self.client = client
+            self.local_setup()
 
-		if self.client.project_string_id is None:
-			raise Exception("\n No project string id in client.")
+    def inference_from_response(
+            self,
+            dict):
 
-		self.name = name
-		self.id = id
-		self.status = None
-		self.local = local
-		self.method = None
-		self.sub_method = None
-		self.min_score_thresh = .5
-		self.build_complete = None
-		self.model_path = None
-		self.image_to_run = None
+        # Assumes object detection
+        # TODO condition on method
 
-		self.use_temp_storage = use_temp_storage
-		self.local_model_storage_path = None
+        inference = Inference(
+            method = "object_detection",
+            id = dict['id'],
+            status = dict['status'],
+            box_list = dict['box_list'],
+            score_list = dict['score_list'],
+            label_list = dict['label_list']
+        )
 
-		if self.local is True:
+        return inference
 
-			# These are only needed for local operations
-			self.temp = tempfile.mkdtemp()
+    def predict_from_url(
+            self,
+            url):
+        """
+        url, string, web end point to get file
+        """
 
-			self.local_setup()
+        if self.local is True:
+            raise Exception("Not supported for local models yet.")
 
+        request = {}
+        request['url'] = url
+        request['ai_name'] = self.name
 
-	def inference_from_response(
-			self, 
-			dict):
+        endpoint = "/api/walrus/v1/project/" + self.client.project_string_id + \
+                   "/inference/from_url"
 
-		# Assumes object detection
-		# TODO condition on method
+        response = self.client.session.post(
+            self.client.host + endpoint,
+            json = request)
 
-		inference = Inference(
-			method = "object_detection",
-			id = dict['id'],
-			status = dict['status'],
-			box_list = dict['box_list'],
-			score_list = dict['score_list'],
-			label_list = dict['label_list']
-			)
+        self.client.handle_errors(response)
 
-		return inference
+        data = response.json()
 
+        self.client.handle_errors(response)
 
+        inference = self.inference_from_response(data['inference'])
+        return inference
 
-	def predict_from_url(
-			self,
-			url):
-		"""
-		url, string, web end point to get file
-		"""
+    def predict_from_local(
+            self,
+            path):
+        """
+        Make a prediction from a local file.
+        Creates a Diffgram file object and runs prediction.
 
-		if self.local is True:
-			raise Exception("Not supported for local models yet.")
+        This is roughly equal to running file.from_local() and predict()
+        but in one request (instead of two).
 
-		request = {}
-		request['url'] = url
-		request['ai_name'] = self.name
+        path, string, file path
+        """
+        if self.local is True:
+            self.image_to_run = open(path, "rb")
 
-		endpoint = "/api/walrus/v1/project/" + self.client.project_string_id + \
-			"/inference/from_url"
+            # WIP
+            # TODO clean up, declare options for different types of expected inputs
+            # this is for model that expects numpy array as input
+            # self.image_np = scipy.misc.imread(path)
+            # self.image_np = self.resize(self.image_np)
 
-		response = self.client.session.post(
-			self.client.host + endpoint, 
-			json = request)
+            # moved this here, was part of other thing prior
+            self.image_to_run = self.image_to_run.read()
 
-		self.client.handle_errors(response)
+            self.run()
 
-		data = response.json()
+            inference = self.inference_from_local()
 
-		self.client.handle_errors(response)
+            return inference
 
-		inference = self.inference_from_response(data['inference'])
-		return inference
+        if self.local is False:
+            files = {'file': open(path, 'rb')}
 
+            options = {'immediate_mode': 'True',
+                       'ai_name': self.name}
 
-	def predict_from_local(
-			self,
-			path):
-		"""
-		Make a prediction from a local file.
-		Creates a Diffgram file object and runs prediction.
+            endpoint = "/api/walrus/v1/project/" + self.client.project_string_id \
+                       + "/inference/from_local"
 
-		This is roughly equal to running file.from_local() and predict()
-		but in one request (instead of two).
+            response = self.client.session.post(
+                self.client.host + endpoint,
+                files = files,
+                data = options)
 
-		path, string, file path
-		"""
-		if self.local is True:
+            self.client.handle_errors(response)
 
-			self.image_to_run = open(path, "rb")
+            data = response.json()
 
-			# WIP 
-			# TODO clean up, declare options for different types of expected inputs
-			# this is for model that expects numpy array as input
-			#self.image_np = scipy.misc.imread(path)
-			#self.image_np = self.resize(self.image_np)
+            inference = self.inference_from_response(data['inference'])
 
-			# moved this here, was part of other thing prior
-			self.image_to_run = self.image_to_run.read()
+            return inference
 
-			self.run()
+        # TODO handle creation of Inference and Instance objects
 
-			inference = self.inference_from_local()
+    def run(
+            self,
+            image = None):
 
-			return inference
-			
-		if self.local is False:
+        if self.build_complete is False:
+            return False
 
-			files = {'file': open(path, 'rb')}
+        if image:
+            self.image_to_run = image
 
-			options = { 'immediate_mode' : 'True',
-						'ai_name' : self.name}
-				
-			endpoint = "/api/walrus/v1/project/" +  self.client.project_string_id \
-				+ "/inference/from_local"
+        with self.graph.as_default():
 
-			response = self.client.session.post(
-				self.client.host + endpoint, 
-				files = files,
-				data = options)
+            # MUST HAVE compat.as_bytes for tf slim
+            # https://www.tensorflow.org/api_docs/python/tf/compat/as_bytes
+            # https://stackoverflow.com/questions/46687348/decoding-tfrecord-with-tfslim
 
-			self.client.handle_errors(response)
-		
-			data = response.json()
+            self.image_to_run_expanded = tf.compat.as_bytes(self.image_to_run)
 
-			inference = self.inference_from_response(data['inference'])
-			
-			return inference
+            self.image_to_run_expanded = np.expand_dims(self.image_to_run_expanded, axis = 0)
 
-			# TODO handle creation of Inference and Instance objects	
+            self.method = "object_detection"
 
-	def run(
-		 self, 
-		 image = None):
+            if self.sub_method == "default" or self.sub_method is None:
+                self.run_object_detection()
 
-		if self.build_complete is False:
-			return False
+        inference = self.inference_from_local()
 
-		if image:
-			self.image_to_run = image
+        return inference
 
-		with self.graph.as_default():
-		
-			# MUST HAVE compat.as_bytes for tf slim 
-			# https://www.tensorflow.org/api_docs/python/tf/compat/as_bytes
-			# https://stackoverflow.com/questions/46687348/decoding-tfrecord-with-tfslim
+    def run_object_detection(self):
 
-			self.image_to_run_expanded = tf.compat.as_bytes(self.image_to_run)
+        (boxes, scores, classes, num) = self.sess.run(
+            [self.detection_boxes,
+             self.detection_scores,
+             self.detection_classes,
+             self.num_detections],
+            feed_dict = {
+                self.image_tensor: self.image_to_run_expanded})
 
-			self.image_to_run_expanded = np.expand_dims(self.image_to_run_expanded, axis=0)
+        self.boxes = np.squeeze(boxes)
+        self.scores = np.squeeze(scores)
+        self.classes = np.squeeze(classes).astype(np.int32)
 
-			self.method = "object_detection"
+    # print(self.boxes, self.scores, self.classes)
 
-			if self.sub_method == "default" or self.sub_method is None:
+    def nearest_iou(self, alpha, bravo):
 
-				self.run_object_detection()
+        _best_iou_hyper = .2
 
+        for i in range(len(alpha.box_list)):
 
-		inference = self.inference_from_local()
+            best_iou = 0
+            best_index = None
 
-		return inference
+            # Find best IoU
+            for j in range(len(bravo.box_list)):
 
-	
-	def run_object_detection(self):
+                iou = Brain.calc_iou(alpha.box_list[i], bravo.box_list[j])
 
-		(boxes, scores, classes, num) = self.sess.run(
-			[self.detection_boxes, 
-			 self.detection_scores, 
-			 self.detection_classes, 
-			 self.num_detections],
-			 feed_dict = { 
-				 self.image_tensor: self.image_to_run_expanded } )
+                if iou >= best_iou:
+                    best_iou = iou
+                    best_index = j
 
-		self.boxes = np.squeeze(boxes)
-		self.scores = np.squeeze(scores)
-		self.classes = np.squeeze(classes).astype(np.int32)
+            if best_index is None:
+                continue
 
-		#print(self.boxes, self.scores, self.classes)
+            # handle large boxes, is the threat entirely inside the box?
+            alpha_box = alpha.box_list[i]
 
+            bravo_box = bravo.box_list[best_index]
 
+            if best_iou > _best_iou_hyper or best_iou > .01 and \
+                    alpha_box[1] < bravo_box[1] and \
+                    alpha_box[3] > bravo_box[3] and \
+                    alpha_box[0] < bravo_box[0] and \
+                    alpha_box[2] > bravo_box[2]:
+                # Assumes boxes have been thresholded already,
+                # This way threshold applies to nearest search too
 
-	def nearest_iou(self, alpha, bravo):
-	 
-		_best_iou_hyper = .2
+                class_id = bravo.label_list[best_index]
 
-		for i in range(len(alpha.box_list)):
-			
-			best_iou = 0
-			best_index = None
+                nearest_alpha_box = bravo.box_list[best_index]
 
-			# Find best IoU
-			for j in range(len(bravo.box_list)):
-				
-				iou = Brain.calc_iou(alpha.box_list[i], bravo.box_list[j])
+                # for stats
+                # self.average_iou = ( (best_iou + self.average_iou  ) / 2)
 
-				if iou >= best_iou:
-					best_iou = iou
-					best_index = j
-			
-			if best_index is None:
-				continue
+                # Where best_index is which bravo one
+                # is "in" which i index
 
-			# handle large boxes, is the threat entirely inside the box?
-			alpha_box = alpha.box_list[i]
+                print("alpha is in bravo", i, "in", best_index)
 
-			bravo_box = bravo.box_list[best_index]
+    @staticmethod
+    def calc_iou(box_a, box_b):
+        # Calculate intersection, i.e. area of overlap between the 2 boxes (could be 0)
+        # http://math.stackexchange.com/a/99576
+        x_overlap = max(0, min(box_a[2], box_b[2]) - max(box_a[0], box_b[0]))
+        y_overlap = max(0, min(box_a[3], box_b[3]) - max(box_a[1], box_b[1]))
+        intersection = x_overlap * y_overlap
 
-			if best_iou > _best_iou_hyper or best_iou > .01 and \
-				alpha_box[1] < bravo_box[1] and \
-				alpha_box[3] > bravo_box[3] and \
-				alpha_box[0] < bravo_box[0] and \
-				alpha_box[2] > bravo_box[2]:
+        # Calculate union
+        area_box_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
+        area_box_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
+        union = area_box_a + area_box_b - intersection
 
-				# Assumes boxes have been thresholded already, 
-				# This way threshold applies to nearest search too
+        if union == 0:
+            return 0
 
-				class_id = bravo.label_list[best_index]
+        iou = intersection / union
+        return iou
 
-				nearest_alpha_box = bravo.box_list[best_index]
-			
-				# for stats
-				#self.average_iou = ( (best_iou + self.average_iou  ) / 2)
+    def resize(self, image):
 
-				# Where best_index is which bravo one
-				# is "in" which i index
+        if image.shape[0] > 600 or image.shape[1] > 600:
+            ratio = min((300 / image.shape[0]),
+                        (300 / image.shape[1]))
 
-				print("alpha is in bravo", i, "in", best_index)
+            shape_x = int(round(image.shape[0] * ratio))
+            shape_y = int(round(image.shape[1] * ratio))
 
+            image = scipy.misc.imresize(image,
+                                        (shape_x, shape_y))
 
+        # print(image.shape)
 
-	@staticmethod
-	def calc_iou(box_a, box_b):
-		# Calculate intersection, i.e. area of overlap between the 2 boxes (could be 0)
-		# http://math.stackexchange.com/a/99576
-		x_overlap = max(0, min(box_a[2], box_b[2]) - max(box_a[0], box_b[0]))
-		y_overlap = max(0, min(box_a[3], box_b[3]) - max(box_a[1], box_b[1]))
-		intersection = x_overlap * y_overlap
+        return image
 
-		# Calculate union
-		area_box_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
-		area_box_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
-		union = area_box_a + area_box_b - intersection
+    def predict_from_file(
+            self,
+            file_id):
+        """
+        file_id, int, diffgram file id
 
-		if union == 0:
-			return 0
+        Assumes singular file for now
+        """
 
-		iou = intersection / union
-		return iou
+        if self.local is True:
+            raise Exception("Not supported for local models yet.")
 
-	def resize(self, image):
+        request = {}
+        request['file_list'] = [{'id': file_id}]
+        request['ai_name'] = self.name
+        request['wait_for_inference'] = True
 
-		if image.shape[0] > 600 or image.shape[1] > 600:
-			ratio = min((300 / image.shape[0]), 
-						(300 / image.shape[1]))
+        endpoint = "/api/walrus/project/" + self.client.project_string_id + \
+                   "/inference/add"
 
-			shape_x = int(round(image.shape[0] * ratio))
-			shape_y = int(round(image.shape[1] * ratio))
+        response = self.client.session.post(
+            self.client.host + endpoint,
+            json = request)
 
-			image = scipy.misc.imresize(image, 
-										(shape_x, shape_y))
+        self.client.handle_errors(response)
 
-			#print(image.shape)
+        data = response.json()
 
-		return image
+        inference = self.inference_from_response(data['inference'])
+        return inference
 
+    def local_setup(self):
+        """
+        Intial setup for local prediction
+        """
 
-	def predict_from_file(
-			self,
-			file_id):
-		"""
-		file_id, int, diffgram file id
+        self.get_checkpoint_and_label_map()
+        self.build()
 
-		Assumes singular file for now
-		"""
+    def get_checkpoint_and_label_map(self):
+        """
 
-		if self.local is True:
-			raise Exception("Not supported for local models yet.")
+        Get download links
+        Download checkpoint file for AI name
 
-		request = {}
-		request['file_list'] = [{'id' : file_id}]
-		request['ai_name'] = self.name
-		request['wait_for_inference'] = True
+        """
+        request = {}
+        request['ai_name'] = self.name
 
+        endpoint = "/api/walrus/project/" + self.client.project_string_id + \
+                   "/brain/local_info"
 
-		endpoint = "/api/walrus/project/" + self.client.project_string_id + \
-			"/inference/add"
+        response = self.client.session.post(
+            self.client.host + endpoint,
+            json = request)
 
-		response = self.client.session.post(
-			self.client.host + endpoint, 
-			json = request)
+        self.client.handle_errors(response)
 
-		self.client.handle_errors(response)
+        data = response.json()
+        ai = data['ai']
+        self.id = ai['id']
 
-		data = response.json()
+        # TODO continue to try and clarify label map crazinesss
 
-		inference = self.inference_from_response(data['inference'])
-		return inference
+        self.file_id_to_model_id = ai['label_dict']
+        # print("Label map", self.file_id_to_model_id)
 
+        self.model_id_to_file_id = {v: k for k, v in self.file_id_to_model_id.items()}
+        self.file_id_to_name = {v: k for k, v in self.client.name_to_file_id.items()}
 
-	def local_setup(self):
-		"""
-		Intial setup for local prediction
-		"""
+        self.build_model_id_to_name()
 
-		self.get_checkpoint_and_label_map()
-		self.build()
+        # Data has url for models and label map
+        # TODO clarify difference between local path and url to download model
 
+        if self.use_temp_storage is True:
+            self.model_path = self.temp + "/" + str(self.id) + ".pb"
 
-	def get_checkpoint_and_label_map(self):
-		"""
+        if self.use_temp_storage is False:
+            self.model_path = self.local_model_storage_path
 
-		Get download links
-		Download checkpoint file for AI name
+        self.url_model = ai['url_model']
 
-		"""
-		request = {}
-		request['ai_name'] = self.name
+        self.download_file(
+            url = self.url_model,
+            path = self.model_path)
 
-		endpoint = "/api/walrus/project/" + self.client.project_string_id + \
-			"/brain/local_info"
+    def build_model_id_to_name(self):
+        """Creates dictionary of COCO compatible categories keyed by category  id.
+        Args:
+        categories: a list of dicts, each of which has the following keys:
+        'id': (required) an integer id uniquely identifying this category.
+        'name': (required) string representing category name
+        e.g., 'cat', 'dog', 'pizza'.
+        Returns:
+        category_index: a dict containing the same entries as categories, but  keyed
+        by the 'id' field of each category.
+        """
 
-		response = self.client.session.post(
-			self.client.host + endpoint, 
-			json = request)
+        self.model_id_to_name = {}
 
-		self.client.handle_errors(response)
+        for file_id, label_name in self.file_id_to_name.items():
 
-		data = response.json()
-		ai = data['ai']
-		self.id = ai['id']
+            model_id = self.file_id_to_model_id.get(str(file_id), None)
 
+            if model_id:
+                self.model_id_to_name[model_id] = {'name': label_name}
 
-		# TODO continue to try and clarify label map crazinesss
+    # print(self.model_id_to_name)
 
-		self.file_id_to_model_id = ai['label_dict']
-		#print("Label map", self.file_id_to_model_id)
+    def download_file(
+            self,
+            url,
+            path
+    ):
 
-		self.model_id_to_file_id = {v: k for k, v in self.file_id_to_model_id.items()}
-		self.file_id_to_name = {v: k for k, v in self.client.name_to_file_id.items()}
+        retry = 0
+        while retry < 3:
 
+            if url[0: 4] != "http":
+                return False
 
-		self.build_model_id_to_name()
-		
-		# Data has url for models and label map
-		# TODO clarify difference between local path and url to download model
+            response = requests.get(url, stream = True)
 
-		if self.use_temp_storage is True:
-			self.model_path = self.temp + "/" + str(self.id) + ".pb"
+            if response.status_code != 200:
+                retry += 1
 
-		if self.use_temp_storage is False:
-			self.model_path = self.local_model_storage_path
+            content_type = response.headers.get('content-type', None)
 
-		self.url_model = ai['url_model']
+            with open(path, 'wb') as file:
 
-		self.download_file(
-			url = self.url_model,
-			path = self.model_path)
+                file.write(response.content)
 
+            return True
 
-	def build_model_id_to_name(self):
-		"""Creates dictionary of COCO compatible categories keyed by category  id.
-		Args:
-		categories: a list of dicts, each of which has the following keys:
-		'id': (required) an integer id uniquely identifying this category.
-		'name': (required) string representing category name
-		e.g., 'cat', 'dog', 'pizza'.
-		Returns:
-		category_index: a dict containing the same entries as categories, but  keyed
-		by the 'id' field of each category.
-		"""
+        return False
 
-		self.model_id_to_name = {}
+    def check_status(
+            self):
+        """
 
-		for file_id, label_name in self.file_id_to_name.items():
 
-			model_id = self.file_id_to_model_id.get(str(file_id), None)
+        """
 
-			if model_id:
-				self.model_id_to_name[model_id] = {'name' : label_name}
+        request = {}
+        request['ai_name'] = self.name
 
-		#print(self.model_id_to_name)
+        endpoint = "/api/walrus/v1/project/" + self.client.project_string_id + \
+                   "/brain/status"
 
+        response = self.client.session.post(
+            self.client.host + endpoint,
+            json = request)
 
+        self.client.handle_errors(response)
 
-	def download_file(
-			self,
-			url,
-			path
-			):
+        data = response.json()
 
-		retry = 0
-		while retry < 3:
+        self.status = data['ai']['status']
 
-			if url[0 : 4] != "http":
-				return False
+    def clean(self):
 
-			response = requests.get(url, stream=True)
+        try:
+            shutil.rmtree(self.temp)  # delete directory
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                raise  # re-raise exception
 
-			if response.status_code != 200:
-				retry += 1
+    def build(self):
+        """
+        Build graph for local prediction
 
-			content_type = response.headers.get('content-type', None)
+        Assumes it has the checkpoint ready to go
 
-			with open(path, 'wb') as file:
+        """
 
-				file.write(response.content)
-			
-			return True
+        self.graph = tf.Graph()
 
-		return False
+        with self.graph.as_default():
+            # with tf.device('/cpu:0'): # for local cpu testing
+            graph_def = tf.GraphDef()
 
+            with tf.gfile.GFile(self.model_path, 'rb') as fid:
+                serialized_graph = fid.read()
+                graph_def.ParseFromString(serialized_graph)
+                tf.import_graph_def(graph_def, name = '')
 
-	def check_status(
-		  self):
-		"""
-		
+            self.sess = tf.Session(graph = self.graph)
 
-		"""
+        # TODO make this more flexible to work with different tensor types
+        self.image_tensor = self.graph.get_tensor_by_name('encoded_image_string_tensor:0')
+        self.detection_boxes = self.graph.get_tensor_by_name('detection_boxes:0')
+        self.detection_scores = self.graph.get_tensor_by_name('detection_scores:0')
+        self.detection_classes = self.graph.get_tensor_by_name('detection_classes:0')
+        self.num_detections = self.graph.get_tensor_by_name('num_detections:0')
 
-		request = {}
-		request['ai_name'] = self.name
+        self.build_complete = True
 
-		endpoint = "/api/walrus/v1/project/" + self.client.project_string_id + \
-			"/brain/status"
+        return True
 
-		response = self.client.session.post(
-			self.client.host + endpoint, 
-			json = request)
+    def inference_from_local(
+            self, ):
 
-		self.client.handle_errors(response)
+        box_list = []
+        score_list = []
+        label_list = []
 
-		data = response.json()
+        for i in range(self.boxes.shape[0]):
+            if self.scores[i] is None:
+                pass
+            if self.scores[i] > self.min_score_thresh:
+                # print("Detection")
 
-		self.status = data['ai']['status']
+                box_list.append(self.boxes[i].tolist())
+                label_list.append(self.classes[i].tolist())
+                score_list.append(self.scores[i].tolist())
 
+        inference = Inference(
+            method = self.method,
+            id = None,
+            status = None,
+            box_list = box_list,
+            score_list = score_list,
+            label_list = label_list
+        )
 
+        return inference
 
-	def clean(self):
+    def visual(self,
+               image = None
+               ):
 
-		try:
-			shutil.rmtree(self.temp)  # delete directory
-		except OSError as exc:
-			if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
-				raise  # re-raise exception
+        if image is None:
+            image = self.image_backup
 
+        # WIP
 
+        # if self.sub_method == "default" or self.sub_method is None:
 
-	def build(self):
-		"""
-		Build graph for local prediction
+        # print("ran visual")
 
-		Assumes it has the checkpoint ready to go
+        vis_util.visualize_boxes_and_labels_on_image_array(
+            image,
+            self.boxes,
+            self.classes,
+            self.scores,
+            self.model_id_to_name,
+            use_normalized_coordinates = True,
+            line_thickness = 3,
+            min_score_thresh = self.min_score_thresh)
 
-		"""
-
-		self.graph = tf.Graph()
-
-		with self.graph.as_default():
-			#with tf.device('/cpu:0'): # for local cpu testing
-			graph_def = tf.GraphDef()
-
-			with tf.gfile.GFile(self.model_path, 'rb') as fid:
-
-				serialized_graph = fid.read()
-				graph_def.ParseFromString(serialized_graph)
-				tf.import_graph_def(graph_def, name='')
-
-			self.sess = tf.Session(graph=self.graph)
-
-		# TODO make this more flexible to work with different tensor types
-		self.image_tensor = self.graph.get_tensor_by_name('encoded_image_string_tensor:0')
-		self.detection_boxes = self.graph.get_tensor_by_name('detection_boxes:0')
-		self.detection_scores = self.graph.get_tensor_by_name('detection_scores:0')
-		self.detection_classes = self.graph.get_tensor_by_name('detection_classes:0')
-		self.num_detections = self.graph.get_tensor_by_name('num_detections:0')
-
-		self.build_complete = True
-
-		return True
-
-
-
-
-	def inference_from_local(
-			self,):
-
-		box_list = []
-		score_list = []
-		label_list = []
-
-		for i in range(self.boxes.shape[0]):
-			if self.scores[i] is None:
-				pass            
-			if self.scores[i] > self.min_score_thresh:
-
-				#print("Detection")
-
-				box_list.append(self.boxes[i].tolist())
-				label_list.append(self.classes[i].tolist())
-				score_list.append(self.scores[i].tolist()) 
-
-		inference = Inference(
-			method = self.method,
-			id = None,
-			status = None,
-			box_list = box_list,
-			score_list = score_list,
-			label_list = label_list
-			)
-
-		return inference
-
-
-
-	def visual(self,
-			image = None
-			):
-
-		if image is None:
-			image = self.image_backup
-
-		# WIP
-
-		#if self.sub_method == "default" or self.sub_method is None:
-
-		#print("ran visual")
-
-		vis_util.visualize_boxes_and_labels_on_image_array(
-			image, 
-			self.boxes, 
-			self.classes, 
-			self.scores,
-			self.model_id_to_name,
-			use_normalized_coordinates=True,
-			line_thickness=3,
-			min_score_thresh=self.min_score_thresh) 
-			
-
-		return image
+        return image
