@@ -59,6 +59,7 @@ class CompoundChildFile:
 
 class CompoundFile:
     project: Project
+    parent_file_data: dict
     child_files_to_upload: List[CompoundChildFile]
 
     def __init__(self, project: Project, name: str, directory_id: int):
@@ -66,6 +67,10 @@ class CompoundFile:
         self.name = name
         self.directory_id = directory_id
         self.child_files_to_upload = []
+
+    def remove_compound_file(self, child_file: CompoundChildFile) -> List[CompoundChildFile]:
+        self.child_files_to_upload.remove(child_file)
+        return self.child_files_to_upload
 
     def __create_compound_parent_file(self):
         url = f'/api/v1/project/{self.project.project_string_id}/file/new-compound'
@@ -77,6 +82,8 @@ class CompoundFile:
                                              json = data)
         self.project.handle_errors(response)
         data = response.json()
+        self.parent_file_data = data.get('file')
+        print('self,', self.parent_file_data)
         return data.get('file')
 
     def __create_child_file(self, child_file: CompoundChildFile):
@@ -87,7 +94,8 @@ class CompoundFile:
                 instance_list = child_file.instance_list,
                 frame_packet_map = child_file.frame_packet_map,
                 assume_new_instances_machine_made = child_file.assume_new_instances_machine_made,
-                convert_names_to_label_files = child_file.convert_names_to_label_files
+                convert_names_to_label_files = child_file.convert_names_to_label_files,
+                parent_file_id = self.parent_file_data.get('id')
             )
         elif child_file.child_file_type == 'from_url':
             return self.project.file.from_url(
@@ -98,6 +106,7 @@ class CompoundFile:
                 video_split_duration = child_file.video_split_duration,
                 instance_list = child_file.instance_list,
                 frame_packet_map = child_file.frame_packet_map,
+                parent_file_id = self.parent_file_data.get('id')
             )
         elif child_file.child_file_type == 'from_blob_path':
             return self.project.file.from_blob_path(
@@ -107,7 +116,8 @@ class CompoundFile:
                 media_type = child_file.media_type,
                 instance_list = child_file.instance_list,
                 file_name = child_file.file_name,
-                frame_packet_map = child_file.frame_packet_map
+                frame_packet_map = child_file.frame_packet_map,
+                parent_file_id = self.parent_file_data.get('id')
             )
 
     def add_child_from_local(self,
@@ -175,8 +185,6 @@ class CompoundFile:
 
     def upload(self):
         parent_file_data: dict = self.__create_compound_parent_file()
-        print('created', parent_file_data)
         for child_file in self.child_files_to_upload:
-            print('child_file', child_file)
             self.__create_child_file(child_file)
         return parent_file_data

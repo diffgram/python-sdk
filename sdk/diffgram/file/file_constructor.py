@@ -76,9 +76,8 @@ class FileConstructor():
                 assume_new_instances_machine_made = assume_new_instances_machine_made,
                 convert_names_to_label_files = convert_names_to_label_files
             )
-
+        json_payload['parent_file_id'] = parent_file_id
         files['json'] = (None, json.dumps(json_payload), 'application/json')
-
         endpoint = "/api/walrus/v1/project/" + self.client.project_string_id \
                    + "/input/from_local"
 
@@ -167,7 +166,8 @@ class FileConstructor():
             connection_id = connection_id,
             file_name = name,
             directory_id = directory_id,
-            type = "from_blob_path"
+            type = "from_blob_path",
+            parent_file_id=parent_file_id
         )
         self.from_packet(packet = packet)
         return True
@@ -213,7 +213,8 @@ class FileConstructor():
             job_id = job_id,
             video_split_duration = video_split_duration,
             instance_list = instance_list,
-            frame_packet_map = frame_packet_map
+            frame_packet_map = frame_packet_map,
+            parent_file_id = parent_file_id
         )
         self.from_packet(packet = packet)
 
