@@ -41,7 +41,7 @@ class File3D:
         })
         return self.point_list
 
-    def upload(self, dataset_name = None, chunk_size = 5000000):
+    def upload(self, dataset_name = None, chunk_size = 6000000):
         """
             Builds a JSON file from current point list and uploads it to
             Diffgram.
@@ -63,7 +63,6 @@ class File3D:
         endpoint = "/api/walrus/project/{}/upload/large".format(
             self.client.project_string_id
         )
-        chunk_size = 5000000  # 5 MB chunks
         dataset_id = self.client.default_directory.id
         if dataset_name is not None:
             dataset_id = self.client.directory.get(dataset_name).id
