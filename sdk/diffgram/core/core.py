@@ -18,7 +18,6 @@ from diffgram.export.export import Export
 from diffgram.task.task import Task
 from requests.auth import HTTPBasicAuth
 
-
 class Project():
     default_directory: Directory
     last_response_header: None
