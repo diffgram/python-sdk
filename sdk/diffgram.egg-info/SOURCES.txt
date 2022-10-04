@@ -36,6 +36,7 @@ diffgram/label/test_label.py
 diffgram/member/__init__.py
 diffgram/models/__init__.py
 diffgram/models/base_model.py
+diffgram/models/model_interfaces.py
 diffgram/pytorch_diffgram/__init__.py
 diffgram/pytorch_diffgram/diffgram_pytorch_dataset.py
 diffgram/regular/__init__.py

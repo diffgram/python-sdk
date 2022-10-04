@@ -1,6 +1,14 @@
-from diffgram import DiffgramBaseModel
+from diffgram import DiffgramBaseModel, Instance
 from fastapi import FastAPI
 
-app = FastAPI()
+class MyTestModel(DiffgramBaseModel):
+    def infere(self, file):
+        return [
+            Instance(id=1)
+        ]
 
-DiffgramBaseModel().serve(app)
+    def get_schema(self):
+        return super().get_schema()
+
+app = FastAPI()
+MyTestModel().serve(app)

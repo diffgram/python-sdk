@@ -1,10 +1,10 @@
-from fastapi import FastAPI
-
+from .model_interfaces import DiffgramFile, Instance
+from typing import List
 class DiffgramBaseModel():
     def init(self):
         pass
 
-    def infere(self):
+    def infere(self, file: DiffgramFile) -> List[Instance]:
         raise NotImplementedError
 
     def get_schema(self):
@@ -14,10 +14,21 @@ class DiffgramBaseModel():
         pass
 
     def serve(self, app):
-        @app.get("/infere")
-        async def predict():
+        @app.post("/infere")
+        async def predict(file: DiffgramFile):
+            predictions = self.infere(file)
+
+            if not isinstance(predictions, List):
+                raise ValueError('infere should return List of type Instance') 
+
+            for prediction in predictions:
+                res = isinstance(prediction, Instance)
+                if not res:
+                    raise ValueError('infere should return List of type Instance') 
+
             return {
-                "message": "Infere route"
+                "file": file,
+                "predictions": predictions
             }
 
         @app.get("/get_schema")
