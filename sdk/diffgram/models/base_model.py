@@ -1,10 +1,9 @@
-from .model_interfaces import DiffgramFile, Instance
-from typing import List
+from .model_interfaces import DiffgramFile, Prediction, Attribute, Instance
 class DiffgramBaseModel():
     def init(self):
         pass
 
-    def infere(self, file: DiffgramFile) -> List[Instance]:
+    def infere(self, file: DiffgramFile) -> Prediction:
         raise NotImplementedError
 
     def get_schema(self):
@@ -18,13 +17,20 @@ class DiffgramBaseModel():
         async def predict(file: DiffgramFile):
             predictions = self.infere(file)
 
-            if not isinstance(predictions, List):
-                raise ValueError('infere should return List of type Instance') 
+            if not isinstance(predictions, Prediction):
+                raise ValueError('predictions should be of type Prediction') 
 
-            for prediction in predictions:
-                res = isinstance(prediction, Instance)
-                if not res:
-                    raise ValueError('infere should return List of type Instance') 
+            if predictions.instances:
+                for predicted_instance in predictions.instances:
+                    instance = isinstance(predicted_instance, Instance)
+                    if not instance:
+                        raise ValueError('predicted instances should be of type Instance')
+
+            if predictions.attributes:
+                for predicted_attributes in predictions.attributes:
+                    instance = isinstance(predicted_attributes, Attribute)
+                    if not instance:
+                        raise ValueError('predicted attributes should be of type Attribute')
 
             return {
                 "file": file,
