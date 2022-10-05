@@ -13,7 +13,7 @@ class DiffgramBaseModel():
                 raise ValueError('allowed_types must be of type list')
 
             for allowed_type in allowed_types:
-                if allowed_type not in self.diffgram_allowed_types:
+                if allowed_type not in self.diffgram_allowed_types.__dict__['__args__']:
                     raise ValueError(f"{allowed_type} is not valid Diffgram file type")
             
             self.allowed_types = allowed_types
