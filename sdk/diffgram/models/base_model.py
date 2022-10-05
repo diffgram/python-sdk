@@ -1,12 +1,14 @@
+from abc import ABC, abstractmethod
 from fastapi import HTTPException
-from typing import List, Literal
+from typing import Literal
 from .model_interfaces import DiffgramFile, Prediction, Attribute, Instance
-class DiffgramBaseModel():
+class DiffgramBaseModel(ABC):
     diffgram_allowed_types = Literal['image', 'frame', 'video', 'text', 'audio', 'sensor_fusion', 'geospatial']
-
+    allowed_types: list = None
+    
     def __init__(
         self, 
-        allowed_types: list = None
+        allowed_types: list = None,
     ):
         if allowed_types is not None:
             if not isinstance(allowed_types, list):
@@ -18,14 +20,13 @@ class DiffgramBaseModel():
             
             self.allowed_types = allowed_types
 
+    @abstractmethod
     def infere(self, file: DiffgramFile) -> Prediction:
         raise NotImplementedError
 
+    @abstractmethod
     def get_schema(self):
         raise NotImplementedError
-
-    def ping(self):
-        pass
 
     def serve(self, app):
         @app.post("/infere")
@@ -60,4 +61,10 @@ class DiffgramBaseModel():
         async def get_schema_route():
             return {
                 "message": "Get schema here"
+            }
+
+        @app.get("/ping")
+        async def ping_route():
+            return {
+                "message": "Model is up and running"
             }
