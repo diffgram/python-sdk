@@ -1,7 +1,22 @@
+from fastapi import HTTPException
+from typing import List, Literal
 from .model_interfaces import DiffgramFile, Prediction, Attribute, Instance
 class DiffgramBaseModel():
-    def init(self):
-        pass
+    diffgram_allowed_types = Literal['image', 'frame', 'video', 'text', 'audio', 'sensor_fusion', 'geospatial']
+
+    def __init__(
+        self, 
+        allowed_types: list = None
+    ):
+        if allowed_types is not None:
+            if not isinstance(allowed_types, list):
+                raise ValueError('allowed_types must be of type list')
+
+            for allowed_type in allowed_types:
+                if allowed_type not in self.diffgram_allowed_types:
+                    raise ValueError(f"{allowed_type} is not valid Diffgram file type")
+            
+            self.allowed_types = allowed_types
 
     def infere(self, file: DiffgramFile) -> Prediction:
         raise NotImplementedError
@@ -14,7 +29,11 @@ class DiffgramBaseModel():
 
     def serve(self, app):
         @app.post("/infere")
-        async def predict(file: DiffgramFile):
+        async def infere_route(file: DiffgramFile):
+            if self.allowed_types is not None:
+                if file.type not in self.allowed_types:
+                    raise HTTPException(status_code=404, detail=f"This model does not support {file.type} files")
+
             predictions = self.infere(file)
 
             if not isinstance(predictions, Prediction):
@@ -38,7 +57,7 @@ class DiffgramBaseModel():
             }
 
         @app.get("/get_schema")
-        async def schema():
+        async def get_schema_route():
             return {
                 "message": "Get schema here"
             }

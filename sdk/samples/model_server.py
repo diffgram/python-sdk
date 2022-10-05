@@ -11,4 +11,4 @@ class MyTestModel(DiffgramBaseModel):
         return super().get_schema()
 
 app = FastAPI()
-MyTestModel().serve(app)
+MyTestModel(allowed_types=["image"]).serve(app)

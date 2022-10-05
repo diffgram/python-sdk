@@ -1,10 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional
-from typing import List
-
+from typing import Optional, List, Literal
 class DiffgramFile(BaseModel):
     id: int
-    type: str
+    type: Literal['image', 'frame', 'video', 'text', 'audio', 'sensor_fusion', 'geospatial']
 
 class Attribute(BaseModel):
     id: int
