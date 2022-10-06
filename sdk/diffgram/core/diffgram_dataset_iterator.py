@@ -120,10 +120,14 @@ class DiffgramDatasetIterator:
 
     def get_image_data(self, diffgram_file):
         MAX_RETRIES = 10
+        image = None
         if hasattr(diffgram_file, 'image'):
             for i in range(0, MAX_RETRIES):
                 try:
-                    image = imread(diffgram_file.image.get('url_signed'))
+                    if diffgram_file.image:
+                        url = diffgram_file.image.get('url_signed')
+                        if url:
+                            image = imread(diffgram_file.image.get('url_signed'))
                     break
                 except Exception as e:
                     if i < MAX_RETRIES - 1:
@@ -163,7 +167,6 @@ class DiffgramDatasetIterator:
     def get_file_instances(self, diffgram_file):
         if diffgram_file.type not in ['image', 'frame']:
             raise NotImplementedError('File type "{}" is not supported yet'.format(diffgram_file['type']))
-
         image = self.get_image_data(diffgram_file)
         instance_list = diffgram_file.instance_list
         instance_types_in_file = set([x['type'] for x in instance_list])
