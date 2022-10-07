@@ -5,6 +5,7 @@ import traceback
 import sys
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
+from typing import Callable
 
 
 class DiffgramDatasetIterator:
@@ -15,13 +16,15 @@ class DiffgramDatasetIterator:
     file_cache: dict
     _internal_file_list: list
     current_file_index: int
+    custom_signer_fn: Callable
 
     def __init__(self,
                  project,
                  diffgram_file_id_list,
                  validate_ids = True,
                  max_size_cache = 1073741824,
-                 max_num_concurrent_fetches = 25):
+                 max_num_concurrent_fetches = 25,
+                 custom_signer_fn = None):
         """
 
         :param project (sdk.core.core.Project): A Project object from the Diffgram SDK
@@ -30,6 +33,7 @@ class DiffgramDatasetIterator:
         self.diffgram_file_id_list = []
         self.max_size_cache = 1073741824
         self.pool = None
+        self.custom_signer_fn = custom_signer_fn
         self.file_cache = {}
         self._internal_file_list = []
         self.current_file_index = 0
@@ -118,16 +122,24 @@ class DiffgramDatasetIterator:
             raise Exception(
                 'Some file IDs do not belong to the project. Please provide only files from the same project.')
 
+    def set_custom_url_signer(self, signer_fn: Callable):
+        self.custom_signer_fn = signer_fn
+
     def get_image_data(self, diffgram_file):
         MAX_RETRIES = 10
         image = None
         if hasattr(diffgram_file, 'image'):
             for i in range(0, MAX_RETRIES):
                 try:
+                    url = None
                     if diffgram_file.image:
                         url = diffgram_file.image.get('url_signed')
-                        if url:
-                            image = imread(diffgram_file.image.get('url_signed'))
+                    if diffgram_file.image and self.custom_signer_fn is not None:
+                        blob_path = diffgram_file.image['url_signed_blob_path']
+                        bucket_name = diffgram_file.image['bucket_name']
+                        url = self.custom_signer_fn(blob_path, bucket_name)
+                    if url:
+                        image = imread(url)
                     break
                 except Exception as e:
                     if i < MAX_RETRIES - 1:
