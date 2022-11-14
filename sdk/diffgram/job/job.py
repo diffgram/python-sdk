@@ -242,7 +242,9 @@ class Job():
              limit = 100,
              status = ["All"],
              name = None,
-             tags = []):
+             tags = [],
+             page_number = 1,
+            ):
         """
 
         :param limit:
@@ -270,7 +272,8 @@ class Job():
                 "search": name,
                 "status": status,
                 "tag_list": tag_id_list,
-                "project_string_id": self.client.project_string_id
+                "project_string_id": self.client.project_string_id,
+                "page_number": page_number
             }
         }
 
