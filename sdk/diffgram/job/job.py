@@ -2,7 +2,7 @@ from diffgram.core.directory import Directory
 
 
 class Job():
-
+    valid_output_dir_actions = ['copy', 'move']
     def __init__(self,
                  client,
                  job_dict = None):
@@ -137,6 +137,31 @@ class Job():
             'member_list_ids': self.member_list_ids,
             'tag_list': self.tag_list
         }
+    def attach_output_dir(self, dir: Directory, action = 'copy'):
+
+        if action not in self.valid_output_dir_actions:
+            raise ValueError(f'Invalid actions. Can only be {self.valid_output_dir_actions}')
+
+        data = {
+            'job_id': self.id,
+            'output_dir': str(dir.id),
+            'output_dir_action': action
+        }
+        endpoint = "/api/v1/project/{}/job/set-output-dir".format(self.client.project_string_id)
+        response = self.client.session.post(
+            self.client.host + endpoint,
+            json = data)
+
+        self.client.handle_errors(response)
+
+        data = response.json()
+
+        if data["log"]["success"] == True:
+            # TODO review better way to update fields
+            self.id = data["job"]["id"]
+
+        return self
+
 
     def new(self,
             name = None,
@@ -157,6 +182,8 @@ class Job():
             members_list_ids = [],
             auto_launch = True,
             tag_list = [],
+            output_dir = None,
+            output_dir_action = None
             ):
         """
 
@@ -227,6 +254,10 @@ class Job():
         if guide:
             job.guide_update(guide = guide)
 
+        if output_dir and output_dir_action:
+            if output_dir_action not in self.valid_output_dir_actions:
+                raise ValueError(f'Invalid actions. Can only be {self.valid_output_dir_actions}')
+            job.attach_output_dir(dir = output_dir, action = output_dir_action)
         if auto_launch:
             endpoint_launch = "/api/v1/job/launch".format(self.client.project_string_id)
             response = self.client.session.post(
