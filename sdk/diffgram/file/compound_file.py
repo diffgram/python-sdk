@@ -83,7 +83,6 @@ class CompoundFile:
         self.project.handle_errors(response)
         data = response.json()
         self.parent_file_data = data.get('file')
-        print('self,', self.parent_file_data)
         return data.get('file')
 
     def __create_child_file(self, child_file: CompoundChildFile):
