@@ -265,8 +265,13 @@ class Project():
                 "Rate Limited. Please add buffer between calls eg time.sleep(1). Otherwise, please try again later. Else contact us if this persists.")
 
         if response.status_code == 500:
-            raise Exception("Internal error, please try again later.")
-
+            try:
+                raise Exception(response.json()["log"]["error"])
+            except:
+                try:
+                    raise Exception(f"Internal error [500] {response.text}")
+                except:
+                    raise Exception(f"Internal server error: {response}")
         raise_for_status = response.raise_for_status()
         if raise_for_status:
             Exception(raise_for_status)
