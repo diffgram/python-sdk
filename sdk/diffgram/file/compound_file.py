@@ -2,6 +2,7 @@ from diffgram.core.core import Project
 from typing import List
 from diffgram.file.file import File
 from diffgram.job.job import Job
+from uuid import uuid4
 
 
 class CompoundChildFile:
@@ -21,6 +22,8 @@ class CompoundChildFile:
     assume_new_instances_machine_made: bool
     convert_names_to_label_files: bool
     video_split_duration: int
+    local_id: str
+    ordinal: int
 
     def __init__(self,
                  child_file_type: str,
@@ -38,7 +41,8 @@ class CompoundChildFile:
                  frame_packet_map: dict = None,
                  assume_new_instances_machine_made: bool = None,
                  convert_names_to_label_files: bool = None,
-                 video_split_duration: int = None):
+                 video_split_duration: int = None,
+                 ordinal: int = 0):
         self.child_file_type = child_file_type
         self.path = path
         self.url = url
@@ -55,6 +59,11 @@ class CompoundChildFile:
         self.assume_new_instances_machine_made = assume_new_instances_machine_made
         self.convert_names_to_label_files = convert_names_to_label_files
         self.video_split_duration = video_split_duration
+        self.local_id = str(uuid4())
+        self.ordinal = ordinal
+
+    def set_ordinal(self, value: int):
+        self.ordinal = value
 
 
 class CompoundFile:
@@ -67,6 +76,12 @@ class CompoundFile:
         self.name = name
         self.directory_id = directory_id
         self.child_files_to_upload = []
+
+    def __refresh_compound_file_from_data_dict(self, data: dict):
+        if not data:
+            return
+        for key in data:
+            setattr(self, key, data[key])
 
     def remove_compound_file(self, child_file: CompoundChildFile) -> List[CompoundChildFile]:
         self.child_files_to_upload.remove(child_file)
@@ -83,6 +98,7 @@ class CompoundFile:
         self.project.handle_errors(response)
         data = response.json()
         self.parent_file_data = data.get('file')
+        self.__refresh_compound_file_from_data_dict(data.get('file'))
         print('self,', self.parent_file_data)
         return data.get('file')
 
@@ -125,7 +141,8 @@ class CompoundFile:
                              instance_list: list = None,
                              frame_packet_map: dict = None,
                              assume_new_instances_machine_made: bool = True,
-                             convert_names_to_label_files: bool = True):
+                             convert_names_to_label_files: bool = True,
+                             ordinal: int = 0):
         new_child_file = CompoundChildFile(
             child_file_type = "from_local",
             path = path,
@@ -145,7 +162,8 @@ class CompoundFile:
                                 job_id: int = None,
                                 video_split_duration: int = None,
                                 instance_list: list = None,
-                                frame_packet_map: dict = None):
+                                frame_packet_map: dict = None,
+                                ordinal: int = 0):
         new_child_file = CompoundChildFile(
             child_file_type = "from_url",
             url = url,
@@ -167,7 +185,8 @@ class CompoundFile:
                                  media_type: str = 'image',
                                  instance_list: list = None,
                                  file_name: str = None,
-                                 frame_packet_map: dict = None
+                                 frame_packet_map: dict = None,
+                                 ordinal: int = 0
                                  ):
         new_child_file = CompoundChildFile(
             child_file_type = "from_blob_path",
@@ -184,7 +203,10 @@ class CompoundFile:
         return new_child_file
 
     def upload(self):
+        if len(self.child_files_to_upload) == 0:
+            raise AssertionError('Need to add at least one child file to the compound file before calling upload()')
         parent_file_data: dict = self.__create_compound_parent_file()
+
         for child_file in self.child_files_to_upload:
             self.__create_child_file(child_file)
         return parent_file_data
