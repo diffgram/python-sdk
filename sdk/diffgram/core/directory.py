@@ -118,7 +118,8 @@ class Directory(DiffgramDatasetIterator):
             limit = 5000,
             page_num = page_num,
             file_view_mode = 'ids_only',
-            query = query)
+            query = query,
+            with_children_files = True)
 
         if diffgram_ids is False:
             raise Exception('Error Fetching Files: Please check you are providing a valid query.')
@@ -242,7 +243,8 @@ class Directory(DiffgramDatasetIterator):
             limit = 100,
             search_term: str = None,
             file_view_mode: str = 'annotation',
-            query: str = None):
+            query: str = None,
+            with_children_files = False):
         """
         """
         if self.id:
@@ -262,6 +264,7 @@ class Directory(DiffgramDatasetIterator):
                 'page': page_num,
                 'file_view_mode': file_view_mode,
                 'search_term': search_term,
+                'with_children_files': with_children_files,
                 'query': query
             }
         }
