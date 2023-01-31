@@ -1,3 +1,5 @@
+import logging
+
 from PIL import Image, ImageDraw
 from imageio import imread
 import numpy as np
@@ -42,9 +44,14 @@ class DiffgramDatasetIterator:
             diffgram_file_id_list = diffgram_file_id_list,
             validate_ids = validate_ids,
             max_size_cache = max_size_cache,
-            max_num_concurrent_fetches = max_num_concurrent_fetches)
+            max_num_concurrent_fetches = max_num_concurrent_fetches
+        )
 
-    def start_iterator(self, project, diffgram_file_id_list, validate_ids = True, max_size_cache = 1073741824,
+    def start_iterator(self,
+                       project,
+                       diffgram_file_id_list,
+                       validate_ids = True,
+                       max_size_cache = 1073741824,
                        max_num_concurrent_fetches = 25):
         self.diffgram_file_id_list = diffgram_file_id_list
         self.max_size_cache = max_size_cache
@@ -107,7 +114,11 @@ class DiffgramDatasetIterator:
 
     def __next__(self):
         if self.file_cache.get(self.current_file_index):
-            return self.file_cache.get(self.current_file_index)
+            result = self.file_cache.get(self.current_file_index)
+            self.current_file_index += 1
+            return result
+        if self.current_file_index >= len(self.diffgram_file_id_list):
+            raise StopIteration
         instance_data = self.__get_file_data_for_index(self.current_file_index)
         self.current_file_index += 1
         return instance_data
@@ -177,13 +188,16 @@ class DiffgramDatasetIterator:
         return result
 
     def get_file_instances(self, diffgram_file):
-        if diffgram_file.type not in ['image', 'frame']:
-            raise NotImplementedError('File type "{}" is not supported yet'.format(diffgram_file['type']))
-        image = self.get_image_data(diffgram_file)
+        sample = {'diffgram_file': diffgram_file}
+        if diffgram_file.type not in ['image', 'frame', 'compound']:
+            logging.warning('File type "{}" is not supported yet'.format(diffgram_file.type))
+            return sample
+        if diffgram_file.type in ['image', 'frame']:
+            sample['image'] = self.get_image_data(diffgram_file)
         instance_list = diffgram_file.instance_list
         instance_types_in_file = set([x['type'] for x in instance_list])
         # Process the instances of each file
-        sample = {'image': image, 'diffgram_file': diffgram_file}
+
         has_boxes = False
         has_poly = False
         has_tags = False
@@ -231,11 +245,13 @@ class DiffgramDatasetIterator:
     def extract_masks_from_polygon(self, instance_list, diffgram_file, empty_value = 0):
         nx, ny = diffgram_file.image['width'], diffgram_file.image['height']
         mask_list = []
+        if nx is None or ny is None:
+            return mask_list
+
         for instance in instance_list:
             if instance['type'] != 'polygon':
                 continue
             poly = [(p['x'], p['y']) for p in instance['points']]
-
             img = Image.new(mode = 'L', size = (nx, ny), color = 0)  # mode L = 8-bit pixels, black and white
             draw = ImageDraw.Draw(img)
             draw.polygon(poly, outline = 1, fill = 1)
