@@ -44,7 +44,8 @@ class FileConstructor():
             frame_packet_map: dict = None,
             assume_new_instances_machine_made: bool = True,
             convert_names_to_label_files: bool = True,
-            parent_file_id: int = None
+            parent_file_id: int = None,
+            ordinal: int = 0
     ):
         """
         Create a Project file from local path
@@ -56,7 +57,9 @@ class FileConstructor():
 
         files = {'file': (os.path.basename(path), open(path, 'rb'), 'application/octet-stream')}
 
-        json_payload = {}
+        json_payload = {
+            'ordinal': ordinal
+        }
 
         if directory_id is None:
             directory_id = self.client.directory_id
@@ -107,13 +110,15 @@ class FileConstructor():
                                bucket_name: str = None,
                                file_name: str = None,
                                blob_path: str = None,
-                               parent_file_id: int = None):
+                               parent_file_id: int = None,
+                               ordinal: int = 0):
         packet = {'media': {}}
         packet['media']['url'] = url
         packet['media']['type'] = media_type
 
         # Existing Instances
         packet['frame_packet_map'] = frame_packet_map
+        packet['ordinal'] = ordinal
         packet['type'] = type
         packet['connection_id'] = connection_id
         packet['parent_file_id'] = parent_file_id
@@ -140,7 +145,8 @@ class FileConstructor():
                        instance_list: list = None,
                        file_name: str = None,
                        frame_packet_map: dict = None,
-                       parent_file_id: int = None):
+                       parent_file_id: int = None,
+                       ordinal: int = 0):
         """
           Bind a blob path in the given connection ID into Diffgram
         :param blob_path:
@@ -167,7 +173,8 @@ class FileConstructor():
             file_name = name,
             directory_id = directory_id,
             type = "from_blob_path",
-            parent_file_id=parent_file_id
+            parent_file_id=parent_file_id,
+            ordinal = ordinal
         )
         self.from_packet(packet = packet)
         return True
@@ -181,7 +188,8 @@ class FileConstructor():
             video_split_duration: int = None,
             instance_list: list = None,  # for Images
             frame_packet_map: dict = None,  # for Video
-            parent_file_id: int = None
+            parent_file_id: int = None,
+            ordinal: int = 0
     ):
         """
 
@@ -214,7 +222,8 @@ class FileConstructor():
             video_split_duration = video_split_duration,
             instance_list = instance_list,
             frame_packet_map = frame_packet_map,
-            parent_file_id = parent_file_id
+            parent_file_id = parent_file_id,
+            ordinal = ordinal
         )
         self.from_packet(packet = packet)
 
@@ -554,7 +563,15 @@ class FileConstructor():
 
         response_json = response.json()
         file_data = response_json.get(file_response_key)
+        if file_data.get('type') == 'compound':
+            from diffgram.file.compound_file import CompoundFile
+            return CompoundFile.from_dict(
+                project = self.client,
+                dir_id = self.client.directory_id,
+                dict_data = file_data
+            )
 
-        return File.new(
-            client = self.client,
-            file_json = file_data)
+        else:
+            return File.new(
+                client = self.client,
+                file_json = file_data)
