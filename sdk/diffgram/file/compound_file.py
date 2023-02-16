@@ -108,12 +108,12 @@ class CompoundFile:
     parent_file_data: dict
     child_files: List[CompoundChildFile]
 
-    def __init__(self, project: Project, name: str, directory_id: int, type: str = 'compound'):
+    def __init__(self, project: Project, name: str, directory_id: int, file_type: str = 'compound'):
         self.project = project
         self.name = name
         self.directory_id = directory_id
         self.child_files = []
-        self.type = type
+        self.type = file_type
 
     @staticmethod
     def from_dict(project: Project, dir_id: int, dict_data: dict):
