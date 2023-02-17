@@ -107,12 +107,14 @@ class CompoundFile:
     project: Project
     parent_file_data: dict
     child_files: List[CompoundChildFile]
+    instance_list: List[dict]
 
-    def __init__(self, project: Project, name: str, directory_id: int):
+    def __init__(self, project: Project, name: str, directory_id: int, instance_list: List[dict] = []):
         self.project = project
         self.name = name
         self.directory_id = directory_id
         self.child_files = []
+        self.instance_list = instance_list
 
     @staticmethod
     def from_dict(project: Project, dir_id: int, dict_data: dict):
@@ -162,7 +164,8 @@ class CompoundFile:
         url = f'/api/v1/project/{self.project.project_string_id}/file/new-compound'
         data = {
             'name': self.name,
-            'directory_id': self.directory_id
+            'directory_id': self.directory_id,
+            'instance_list': self.instance_list
         }
         response = self.project.session.post(url = self.project.host + url,
                                              json = data)
