@@ -201,6 +201,7 @@ class DiffgramDatasetIterator:
             compound_file: CompoundFile = diffgram_file
             sample['children'] = []
             child_files = compound_file.fetch_child_files(with_instances = True)
+            print('chsad', child_files)
             for child in child_files:
                 result = self.get_file_instances(child)
                 sample['children'].append(result)

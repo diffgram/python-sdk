@@ -134,6 +134,7 @@ class CompoundFile:
 
         data = response.json()
         child_files_data = data['child_files']
+        print('child_files_data', child_files_data)
         result = []
         for elm in child_files_data:
             child_file = CompoundChildFile(root_file = self, child_file_type = elm.get('type'))
