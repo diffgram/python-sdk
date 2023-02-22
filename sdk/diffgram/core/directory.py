@@ -119,7 +119,7 @@ class Directory(DiffgramDatasetIterator):
             page_num = page_num,
             file_view_mode = 'ids_only',
             query = query,
-            with_children_files = True)
+            with_children_files = False)
 
         if diffgram_ids is False:
             raise Exception('Error Fetching Files: Please check you are providing a valid query.')

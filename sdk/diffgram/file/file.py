@@ -1,5 +1,6 @@
 from ..regular.regular import refresh_from_dict
 
+
 class File():
     """
     file literal object
@@ -36,7 +37,7 @@ class File():
 
         """
 
-        file = File(client=client)
+        file = File(client = client)
         refresh_from_dict(file, file_json)
         return file
 
@@ -65,9 +66,9 @@ class File():
         if overwrite:
             packet['mode'] = "update_with_existing"
 
-        self.client.file.from_packet(packet=packet)
+        self.client.file.from_packet(packet = packet)
 
-    def copy(self, destination_dir, copy_instances=False):
+    def copy(self, destination_dir, copy_instances = False):
         payload = {
             'mode': 'TRANSFER',
             'file_list': [
@@ -88,7 +89,7 @@ class File():
 
         response = self.client.session.post(
             self.client.host + endpoint,
-            json=payload)
+            json = payload)
 
         self.client.handle_errors(response)
 
@@ -96,9 +97,5 @@ class File():
         new_file_data = data['log']['info']['new_file'][0]
 
         return File.new(
-            client=self.client,
-            file_json=new_file_data)
-
-
-
-
+            client = self.client,
+            file_json = new_file_data)

@@ -187,13 +187,24 @@ class DiffgramDatasetIterator:
             result.append(elm)
         return result
 
-    def get_file_instances(self, diffgram_file):
-        sample = {'diffgram_file': diffgram_file}
+    def get_file_instances(self, diffgram_file) -> dict:
+        if not diffgram_file:
+            return
+        sample = {'diffgram_file': diffgram_file, 'type': diffgram_file.type}
         if diffgram_file.type not in ['image', 'frame', 'compound']:
             logging.warning('File type "{}" is not supported yet'.format(diffgram_file.type))
             return sample
         if diffgram_file.type in ['image', 'frame']:
             sample['image'] = self.get_image_data(diffgram_file)
+        elif diffgram_file.type  is not None and diffgram_file.type.startswith('compound'):
+            from diffgram.file.compound_file import CompoundFile
+            compound_file: CompoundFile = diffgram_file
+            sample['children'] = []
+            child_files = compound_file.fetch_child_files(with_instances = True)
+            print('chsad', child_files)
+            for child in child_files:
+                result = self.get_file_instances(child)
+                sample['children'].append(result)
         instance_list = diffgram_file.instance_list
         instance_types_in_file = set([x['type'] for x in instance_list])
         # Process the instances of each file

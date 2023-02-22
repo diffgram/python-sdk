@@ -109,31 +109,33 @@ class CompoundFile:
     child_files: List[CompoundChildFile]
     instance_list: List[dict]
 
-    def __init__(self, project: Project, name: str, directory_id: int, instance_list: List[dict] = []):
+    def __init__(self, project: Project, name: str, directory_id: int, instance_list: List[dict] = [], file_type: str = 'compound'):
         self.project = project
         self.name = name
         self.directory_id = directory_id
         self.child_files = []
         self.instance_list = instance_list
+        self.type = file_type
 
     @staticmethod
     def from_dict(project: Project, dir_id: int, dict_data: dict):
         result = CompoundFile(project = project, name = dict_data.get('original_filename'), directory_id = dir_id)
         result.__refresh_compound_file_from_data_dict(data = dict_data)
-        child_files = result.__fetch_child_files()
+        child_files = result.fetch_child_files()
         result.child_files = child_files
         return result
 
-    def __fetch_child_files(self) -> List[CompoundChildFile]:
+    def fetch_child_files(self, with_instances: bool = False) -> List[CompoundChildFile]:
         client = self.project
         endpoint = f"/api/v1/project/{self.project.project_string_id}/file/{self.id}/child-files"
 
-        response = client.session.get(client.host + endpoint)
+        response = client.session.get(client.host + endpoint, params = {'with_instances': with_instances})
 
         client.handle_errors(response)
 
         data = response.json()
         child_files_data = data['child_files']
+        print('child_files_data', child_files_data)
         result = []
         for elm in child_files_data:
             child_file = CompoundChildFile(root_file = self, child_file_type = elm.get('type'))
@@ -165,7 +167,8 @@ class CompoundFile:
         data = {
             'name': self.name,
             'directory_id': self.directory_id,
-            'instance_list': self.instance_list
+            'instance_list': self.instance_list,
+            'type': self.type
         }
         response = self.project.session.post(url = self.project.host + url,
                                              json = data)
