@@ -33,6 +33,7 @@ class Attribute:
              attribute,
              prompt,
              kind,
+             name = None,
              is_global = False,
              label_file_list = None,
              global_type = 'file'
@@ -42,6 +43,7 @@ class Attribute:
       "group_id": attribute['attribute_template_group']['id'],
       "mode": "UPDATE",
       "prompt": prompt,
+      "name": name,
       "kind": kind,
       "is_global": is_global,
       "label_file_list": label_file_list,
