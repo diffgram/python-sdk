@@ -5,7 +5,8 @@ class Conversational:
         self.parent = CompoundFile(
             project=project, 
             name=name, 
-            directory_id=project.default_directory.id
+            directory_id=project.default_directory.id,
+            file_type="compound/conversational"
         )
 
         self.messgaes_meta = []
