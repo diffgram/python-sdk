@@ -16,6 +16,8 @@ from diffgram.role.Role import Role
 from diffgram.brain.train import Train
 from diffgram.export.export import Export
 from diffgram.task.task import Task
+from diffgram.schema.schema import Schema
+from diffgram.schema.attribute import Attribute
 from requests.auth import HTTPBasicAuth
 
 
@@ -86,6 +88,8 @@ class Project():
 
         self.label_schema_list = self.get_label_schema_list()
 
+        self.schema = Schema(self)
+        self.attribute = Attribute(self)
 
 
     def get_member_list(self):

@@ -31,5 +31,9 @@ sdk/diffgram/utils/__pycache__/
 
 venv/*
 
+diffgram.egg-info
+
+playground.py
+
 sdk/build/*
 sdk/dist/
