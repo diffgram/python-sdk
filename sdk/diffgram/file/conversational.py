@@ -1,4 +1,6 @@
 from .compound_file import CompoundFile
+from uuid import uuid4
+import operator
 
 class Conversational:
     def __init__(self, project, name):
@@ -30,9 +32,9 @@ class Conversational:
                 message_date_attribute = attribute
 
         if message_author_attribute is None:
-            new_message_author_attribute = self.project.attribute.new(default_schema)
+            message_author_attribute = self.project.attribute.new(default_schema)
             self.project.attribute.update(
-                new_message_author_attribute, 
+                message_author_attribute, 
                 prompt="Author",
                 kind="text",
                 name="message_author",
@@ -41,9 +43,9 @@ class Conversational:
             )
 
         if message_time_attribute is None:
-            new_message_time_attribute = self.project.attribute.new(default_schema)
+            message_time_attribute = self.project.attribute.new(default_schema)
             self.project.attribute.update(
-                new_message_time_attribute, 
+                message_time_attribute, 
                 prompt="Time",
                 kind="time",
                 name="message_time",
@@ -52,15 +54,19 @@ class Conversational:
             )
 
         if message_date_attribute is None:
-            new_message_date_attribute = self.project.attribute.new(default_schema)
+            message_date_attribute = self.project.attribute.new(default_schema)
             self.project.attribute.update(
-                new_message_date_attribute, 
+                message_date_attribute, 
                 prompt="Date",
                 kind="date",
                 name="message_date",
                 is_global = True,
                 global_type = 'file'
             )
+
+        self.author_attribute = message_author_attribute
+        self.time_attribute = message_time_attribute
+        self.date_attribute = message_date_attribute
 
     def add_message(self, message_file, author=None, time=None, date=None):
         message_meta = {
@@ -73,5 +79,34 @@ class Conversational:
 
         self.parent.add_child_from_local(path=message_file, ordinal=len(self.messgaes_meta))
 
+    def _new_global_instance(self):
+        return {
+            "creation_ref_id": str(uuid4()),
+            "type": "global",
+            "attribute_groups": {}
+        }
+
+
     def upload(self):
         self.parent.upload()
+        child_files = self.parent.fetch_child_files()
+        child_files.sort(key=operator.attrgetter('id'))
+
+        for index in range(0, len(child_files)):
+            global_instance_for_child = self._new_global_instance()
+
+            if self.messgaes_meta[index]["author"] is not None:
+                global_instance_for_child["attribute_groups"][self.author_attribute["id"]] = self.messgaes_meta[index]["author"]
+            if self.messgaes_meta[index]["time"] is not None:
+                global_instance_for_child["attribute_groups"][self.time_attribute["id"]] = self.messgaes_meta[index]["time"]
+            if self.messgaes_meta[index]["date"] is not None:
+                global_instance_for_child["attribute_groups"][self.date_attribute["id"]] = self.messgaes_meta[index]["date"]
+
+            payload = {
+                "instance_list": [global_instance_for_child],
+                "and_complete": False,
+                "child_file_save_id": child_files[index].id
+            }
+            
+            response = self.project.session.post(url=self.project.host + f"/api/project/{self.project.project_string_id}/file/{child_files[index].id}/annotation/update", json=payload)
+            self.project.handle_errors(response)
