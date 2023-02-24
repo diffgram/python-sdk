@@ -39,7 +39,8 @@ class Conversational:
                 kind="text",
                 name="message_author",
                 is_global = True,
-                global_type = 'file'
+                global_type = 'file',
+                is_read_only=True
             )
 
         if message_time_attribute is None:
@@ -50,7 +51,8 @@ class Conversational:
                 kind="time",
                 name="message_time",
                 is_global = True,
-                global_type = 'file'
+                global_type = 'file',
+                is_read_only=True
             )
 
         if message_date_attribute is None:
@@ -61,7 +63,8 @@ class Conversational:
                 kind="date",
                 name="message_date",
                 is_global = True,
-                global_type = 'file'
+                global_type = 'file',
+                is_read_only=True
             )
 
         self.author_attribute = message_author_attribute
