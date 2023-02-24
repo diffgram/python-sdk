@@ -27,7 +27,7 @@ class Attribute:
     self.project.handle_errors(response)
     data = response.json()
 
-    return data
+    return data['attribute_template_group']
   
   def update(self, 
              attribute,
@@ -40,7 +40,7 @@ class Attribute:
             ):
     url = f'/api/v1/project/{self.project.project_string_id}/attribute/group/update'
     payload = {
-      "group_id": attribute['attribute_template_group']['id'],
+      "group_id": attribute['id'],
       "mode": "UPDATE",
       "prompt": prompt,
       "name": name,
