@@ -36,7 +36,8 @@ class Attribute:
              name = None,
              is_global = False,
              label_file_list = None,
-             global_type = 'file'
+             is_read_only = False,
+             global_type = 'file',
             ):
     url = f'/api/v1/project/{self.project.project_string_id}/attribute/group/update'
     payload = {
@@ -47,7 +48,8 @@ class Attribute:
       "kind": kind,
       "is_global": is_global,
       "label_file_list": label_file_list,
-      "global_type": global_type
+      "global_type": global_type,
+      "is_read_only": is_read_only
     }
 
     response = self.project.session.post(url = self.project.host + url, json=payload)
