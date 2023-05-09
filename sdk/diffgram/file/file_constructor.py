@@ -111,6 +111,7 @@ class FileConstructor():
                                file_name: str = None,
                                blob_path: str = None,
                                parent_file_id: int = None,
+                               text_data: str = None,
                                ordinal: int = 0):
         packet = {'media': {}}
         packet['media']['url'] = url
@@ -119,6 +120,7 @@ class FileConstructor():
         # Existing Instances
         packet['frame_packet_map'] = frame_packet_map
         packet['ordinal'] = ordinal
+        packet['text_data'] = text_data
         packet['type'] = type
         packet['connection_id'] = connection_id
         packet['parent_file_id'] = parent_file_id
@@ -173,8 +175,46 @@ class FileConstructor():
             file_name = name,
             directory_id = directory_id,
             type = "from_blob_path",
-            parent_file_id=parent_file_id,
+            parent_file_id = parent_file_id,
             ordinal = ordinal
+        )
+        self.from_packet(packet = packet)
+        return True
+
+    def from_text_data(self,
+                       file_name: str,
+                       text_data: str,
+                       media_type: str = 'text',
+                       instance_list: list = None,
+                       frame_packet_map: dict = None,
+                       parent_file_id: int = None,
+                       directory_id: int = None,
+                       ordinal: int = 0):
+        """
+         Add the given text as a text File in Diffgram
+        :param text_data: the raw text to create the text file from.
+        :param media_type:
+        :param instance_list:
+        :param frame_packet_map:
+        :param parent_file_id: the parent file ID (for compound files)
+        :param ordinal: the ordinal for the child file (for compound files)
+        :return:
+        """
+        if self.client.default_directory is None and directory_id is None:
+            raise Exception("Directory not set. call set_default_directory() to set upload directory.")
+        if directory_id is None:
+            directory_id = self.client.directory_id
+        name = file_name
+        packet = self.__build_packet_payload(
+            media_type = media_type,
+            instance_list = instance_list,
+            frame_packet_map = frame_packet_map,
+            file_name = name,
+            directory_id = directory_id,
+            type = "from_text_data",
+            parent_file_id = parent_file_id,
+            ordinal = ordinal,
+            text_data = text_data
         )
         self.from_packet(packet = packet)
         return True
