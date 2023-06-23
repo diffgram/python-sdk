@@ -144,7 +144,7 @@ class Job():
 
         data = {
             'job_id': self.id,
-            'output_dir': str(dir.id),
+            'output_dir': dir.id,
             'output_dir_action': action
         }
         endpoint = "/api/v1/project/{}/job/set-output-dir".format(self.client.project_string_id)
