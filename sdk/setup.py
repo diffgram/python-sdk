@@ -24,10 +24,16 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
 	install_requires=[
-	   'requests>=2.20.1',
-	   'scipy>=1.1.0',
-	   'six>=1.9.0',
-	   'pillow>=6.1.0',
-       'imageio>=2.9.0'
-	]
+	   'requests>=2.20.1'
+	],
+    extras_require = {
+        'ml':  ["opencv-python>=4.0.0.21",
+                'pillow>=6.1.0',
+                'scipy>=1.1.0',
+                	'pillow>=6.1.0',
+                'imageio>=2.9.0',
+                'tensorflow>=1.12.0',
+                'torch'
+                ]
+    }
 )

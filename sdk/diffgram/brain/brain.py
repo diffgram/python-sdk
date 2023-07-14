@@ -2,21 +2,7 @@ from diffgram.brain.inference import Inference
 
 import tempfile
 
-try:
-    import cv2
-except:
-    print("Warning: Could not import cv2. Some SDK functions may not be available.")
-
-try:
-    import tensorflow as tf
-except:
-    print("Warning: Could not import tensorflow. Some SDK functions may not be available")
-
-import numpy as np
 import requests
-import scipy.misc
-
-import diffgram.utils.visualization_utils as vis_util
 
 
 class Brain():
@@ -37,6 +23,20 @@ class Brain():
         if local is true will perform additional setup work local_setup()
 
         """
+        try:
+            import cv2
+        except:
+            print("Info: Could not import cv2. Some SDK functions may not be available.")
+
+        try:
+            import tensorflow as tf
+        except:
+            print("Info: Could not import tensorflow. Some SDK functions may not be available")
+
+        import numpy as np
+        import scipy.misc
+        import diffgram.utils.visualization_utils as vis_util
+
 
         self.client = client
 

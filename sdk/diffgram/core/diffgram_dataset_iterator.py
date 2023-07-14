@@ -1,8 +1,5 @@
 import logging
 
-from PIL import Image, ImageDraw
-from imageio import imread
-import numpy as np
 import traceback
 import sys
 from threading import Thread
@@ -137,6 +134,7 @@ class DiffgramDatasetIterator:
         self.custom_signer_fn = signer_fn
 
     def get_image_data(self, diffgram_file):
+        from imageio import imread
         MAX_RETRIES = 10
         image = None
         if hasattr(diffgram_file, 'image'):
@@ -254,6 +252,8 @@ class DiffgramDatasetIterator:
         return sample
 
     def extract_masks_from_polygon(self, instance_list, diffgram_file, empty_value = 0):
+        from PIL import Image, ImageDraw
+        import numpy as np
         nx, ny = diffgram_file.image['width'], diffgram_file.image['height']
         mask_list = []
         if nx is None or ny is None:
